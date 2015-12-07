@@ -1,0 +1,118 @@
+
+SQLite or postgresql database with three tables:
+
+
+table1:
+
+CREATE TABLE accession
+(
+  accession_number character varying(18) NOT NULL,
+  clinical_information character varying(1000),
+  specimen_count integer,
+  patient_id integer NOT NULL,
+  date_accessioned timestamp without time zone,
+  case_status_id integer,
+  accession_id integer DEFAULT nextval('accession_accession_id_seq'::regclass),
+  datecreated timestamp without time zone NOT NULL DEFAULT now(),
+  cdbuser text NOT NULL DEFAULT "current_user"(),
+  assigned boolean,
+  date_signout timestamp without time zone,
+  CONSTRAINT accession_pkey PRIMARY KEY (accession_number),
+  CONSTRAINT refcase_status61 FOREIGN KEY (case_status_id)
+      REFERENCES case_status (case_status_id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE NO ACTION,
+  CONSTRAINT refpatient3 FOREIGN KEY (patient_id)
+      REFERENCES patient (patient_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+
+table 2:
+
+CREATE TABLE patient
+(
+  patient_id serial NOT NULL,
+  last_name character varying(50),
+  medical_record character varying(18),
+  first_name character varying(50),
+  date_of_birth date,
+  email character varying(50),
+  business_phone character varying(25),
+  home_phone character varying(25),
+  mobile_phone character varying(25),
+  fax_number character varying(25),
+  address character varying(100),
+  city character varying(50),
+  state_province character varying(50),
+  zip_postal_code character varying(15),
+  country_region character varying(50),
+  webpage character varying(100),
+  gender character(1),
+  marital_status character(10),
+  occupation character varying(50),
+  comment character varying(4000),
+  insurer_id integer,
+  middle_name character varying(50),
+  insurance_number character varying(15),
+  cdbuser text NOT NULL DEFAULT "current_user"(),
+  datecreated timestamp with time zone NOT NULL DEFAULT now(),
+  full_address character varying(200),
+  full_name character varying(120),
+  CONSTRAINT patient_pkey PRIMARY KEY (patient_id),
+  CONSTRAINT "patient-insurer-fk" FOREIGN KEY (insurer_id)
+      REFERENCES insurer (insurer_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+
+table 3:
+CREATE TABLE specimen
+(
+  specimen_id serial NOT NULL,
+  accession_number character varying(18) NOT NULL,
+  date_entered timestamp without time zone NOT NULL DEFAULT now(),
+  date_signout timestamp without time zone,
+  specimen_label character varying(256),
+  date_grossed timestamp without time zone,
+  microscopic_description character varying(4000),
+  diagnosis character varying(4000),
+  lesion_presence boolean,
+  number_of_pieces integer,
+  number_of_lesions integer,
+  consult_result character varying(4000),
+  comment character varying(4000),
+  synoptic text,
+  qa_conference_case boolean,
+  specimen_type_id integer,
+  priority_id integer,
+  received_as_id integer,
+  cdbuser character varying(50),
+  submitall boolean,
+  gross_description text,
+  medical_procedure_id integer,
+  surgical_procedure character varying(100),
+  module_selected character varying(100),
+  CONSTRAINT specimen_pkey PRIMARY KEY (specimen_id),
+  CONSTRAINT refaccession38 FOREIGN KEY (accession_number)
+      REFERENCES accession (accession_number) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE NO ACTION,
+  CONSTRAINT refmedical_procedure_id48 FOREIGN KEY (medical_procedure_id)
+      REFERENCES medical_procedure (medical_procedure_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT refprocess_priority48 FOREIGN KEY (priority_id)
+      REFERENCES priority (priority_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT refspecimen_received_as62 FOREIGN KEY (received_as_id)
+      REFERENCES received_as (received_as_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT refspecimen_type27 FOREIGN KEY (specimen_type_id)
+      REFERENCES specimen_type (specimen_type_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
