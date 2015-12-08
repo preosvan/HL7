@@ -248,7 +248,41 @@ type
 
   //
   TOBX = class(THL7Segment)
-
+  private
+    function GetAbnormalFlags: string;
+    function GetDateLastObsNormalValues: string;
+    function GetDateTimeOfObservation: string;
+    function GetNatureOfAbnormalTest: string;
+    function GetObservationIdentifier: string;
+    function GetObservationMethod: string;
+    function GetObservationSubID: string;
+    function GetObservationValue: string;
+    function GetObservResultStatus: string;
+    function GetProbability: string;
+    function GetProducersID: string;
+    function GetReferencesRange: string;
+    function GetResponsibleObserver: string;
+    function GetUnits: string;
+    function GetUserDefinedAccessChecks: string;
+    function GetValueType: string;
+  public
+    function ToString: string; override;
+    property ValueType: string read GetValueType;
+    property ObservationIdentifier: string read GetObservationIdentifier;
+    property ObservationSubID: string read GetObservationSubID;
+    property ObservationValue: string read GetObservationValue;
+    property Units: string read GetUnits;
+    property ReferencesRange: string read GetReferencesRange;
+    property AbnormalFlags: string read GetAbnormalFlags;
+    property Probability: string read GetProbability;
+    property NatureOfAbnormalTest: string read GetNatureOfAbnormalTest;
+    property ObservResultStatus: string read GetObservResultStatus;
+    property DateLastObsNormalValues: string read GetDateLastObsNormalValues;
+    property UserDefinedAccessChecks: string read GetUserDefinedAccessChecks;
+    property DateTimeOfObservation: string read GetDateTimeOfObservation;
+    property ProducersID: string read GetProducersID;
+    property ResponsibleObserver: string read GetResponsibleObserver;
+    property ObservationMethod: string read GetObservationMethod;
   end;
 
   THL7Message = class
@@ -941,6 +975,110 @@ begin
             PlannedPatientTransportComment + HL7_SEPARATOR;
 end;
 
+
+{ TOBX }
+
+function TOBX.GetAbnormalFlags: string;
+begin
+  Result := GetValue(Integer(obxeAbnormalFlags));
+end;
+
+function TOBX.GetDateLastObsNormalValues: string;
+begin
+  Result := GetValue(Integer(obxeDateLastObsNormalValues));
+end;
+
+function TOBX.GetDateTimeOfObservation: string;
+begin
+  Result := GetValue(Integer(obxeDateTimeOfObservation));
+end;
+
+function TOBX.GetNatureOfAbnormalTest: string;
+begin
+  Result := GetValue(Integer(obxeNatureOfAbnormalTest));
+end;
+
+function TOBX.GetObservationIdentifier: string;
+begin
+  Result := GetValue(Integer(obxeObservationIdentifier));
+end;
+
+function TOBX.GetObservationMethod: string;
+begin
+  Result := GetValue(Integer(obxeObservationMethod));
+end;
+
+function TOBX.GetObservationSubID: string;
+begin
+  Result := GetValue(Integer(obxeObservationSubID));
+end;
+
+function TOBX.GetObservationValue: string;
+begin
+  Result := GetValue(Integer(obxeObservationValue));
+end;
+
+function TOBX.GetObservResultStatus: string;
+begin
+  Result := GetValue(Integer(obxeObservResultStatus));
+end;
+
+function TOBX.GetProbability: string;
+begin
+  Result := GetValue(Integer(obxeProbability));
+end;
+
+function TOBX.GetProducersID: string;
+begin
+  Result := GetValue(Integer(obxeProducersID));
+end;
+
+function TOBX.GetReferencesRange: string;
+begin
+  Result := GetValue(Integer(obxeReferencesRange));
+end;
+
+function TOBX.GetResponsibleObserver: string;
+begin
+  Result := GetValue(Integer(obxeResponsibleObserver));
+end;
+
+function TOBX.GetUnits: string;
+begin
+  Result := GetValue(Integer(obxeUnits));
+end;
+
+function TOBX.GetUserDefinedAccessChecks: string;
+begin
+  Result := GetValue(Integer(obxeUserDefinedAccessChecks));
+end;
+
+function TOBX.GetValueType: string;
+begin
+  Result := GetValue(Integer(obxeValueType));
+end;
+
+function TOBX.ToString: string;
+begin
+  Result := inherited;
+  Result := Result + HL7_SEPARATOR +
+            ValueType + HL7_SEPARATOR +
+            ObservationIdentifier + HL7_SEPARATOR +
+            ObservationSubID + HL7_SEPARATOR +
+            ObservationValue + HL7_SEPARATOR +
+            Units + HL7_SEPARATOR +
+            ReferencesRange + HL7_SEPARATOR +
+            AbnormalFlags + HL7_SEPARATOR +
+            Probability + HL7_SEPARATOR +
+            NatureOfAbnormalTest + HL7_SEPARATOR +
+            ObservResultStatus + HL7_SEPARATOR +
+            DateLastObsNormalValues + HL7_SEPARATOR +
+            UserDefinedAccessChecks + HL7_SEPARATOR +
+            DateTimeOfObservation + HL7_SEPARATOR +
+            ProducersID + HL7_SEPARATOR +
+            ResponsibleObserver + HL7_SEPARATOR +
+            ObservationMethod + HL7_SEPARATOR;
+end;
 
 end.
 
