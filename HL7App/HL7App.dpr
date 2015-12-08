@@ -2,7 +2,7 @@ program HL7App;
 
 uses
   Vcl.Forms,
-  MainFrm in 'MainFrm.pas' {Form1},
+  MainFrm in 'MainFrm.pas' {MainForm},
   DMUnit in 'DMUnit.pas' {DM: TDataModule},
   MedModel in 'MedModel.pas',
   MedUtils in 'MedUtils.pas',
@@ -13,7 +13,7 @@ uses
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TDM, DM);
   Application.Run;
 end.

@@ -1,7 +1,7 @@
-object Form1: TForm1
+object MainForm: TMainForm
   Left = 0
   Top = 0
-  Caption = 'Form1'
+  Caption = 'Testing HL7'
   ClientHeight = 614
   ClientWidth = 738
   Color = clBtnFace
@@ -15,11 +15,13 @@ object Form1: TForm1
   TextHeight = 13
   object meParse: TMemo
     Left = 0
-    Top = 89
+    Top = 65
     Width = 738
-    Height = 484
+    Height = 508
     Align = alClient
     TabOrder = 0
+    ExplicitTop = 89
+    ExplicitHeight = 484
   end
   object pnBottom: TPanel
     Left = 0
@@ -32,7 +34,7 @@ object Form1: TForm1
       738
       41)
     object btnMSH: TButton
-      Left = 480
+      Left = 224
       Top = 6
       Width = 121
       Height = 25
@@ -42,7 +44,7 @@ object Form1: TForm1
       OnClick = btnMSHClick
     end
     object btnPatient: TButton
-      Left = 607
+      Left = 351
       Top = 6
       Width = 121
       Height = 25
@@ -51,12 +53,32 @@ object Form1: TForm1
       TabOrder = 1
       OnClick = btnPatientClick
     end
+    object btnOBR: TButton
+      Left = 478
+      Top = 6
+      Width = 121
+      Height = 25
+      Anchors = [akTop, akRight]
+      Caption = 'OBR'
+      TabOrder = 2
+      OnClick = btnOBRClick
+    end
+    object btnOBX: TButton
+      Left = 605
+      Top = 6
+      Width = 121
+      Height = 25
+      Anchors = [akTop, akRight]
+      Caption = 'OBX'
+      TabOrder = 3
+      OnClick = btnOBXClick
+    end
   end
   object meMsg: TMemo
     Left = 0
     Top = 0
     Width = 738
-    Height = 89
+    Height = 65
     Align = alTop
     Lines.Strings = (
       
@@ -65,7 +87,14 @@ object Form1: TForm1
       
         'PID|1|2|001677980|3|SMITH^CURTIS^SC|MothersMaidenName|19680219|M' +
         '|PatientAlias|Race|Address1^Address2^City^ProvinceCode^PostalCod' +
-        'e^SEERCountryGeocode|||||||929645156318|123456789|')
+        'e^SEERCountryGeocode|||||||929645156318|123456789|'
+      
+        'OBR|1|341856649^HNAM_ORDERID|000002006326002362|648088^Basic Met' +
+        'abolic Panel|||20061122151600|||||||||1620^Hooker^Robert^L||||||' +
+        '20061122154733|||F|||||||||||20061122140000|'
+      
+        'OBX|1|NM|GLU^Glucose Lvl|59|mg/dL|65-99^65^99|L|||F|||2006112215' +
+        '4733|')
     TabOrder = 2
     WordWrap = False
   end

@@ -7,14 +7,18 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls;
 
 type
-  TForm1 = class(TForm)
+  TMainForm = class(TForm)
     meMsg: TMemo;
     meParse: TMemo;
     btnMSH: TButton;
     pnBottom: TPanel;
     btnPatient: TButton;
+    btnOBR: TButton;
+    btnOBX: TButton;
     procedure btnMSHClick(Sender: TObject);
     procedure btnPatientClick(Sender: TObject);
+    procedure btnOBRClick(Sender: TObject);
+    procedure btnOBXClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -22,7 +26,7 @@ type
   end;
 
 var
-  Form1: TForm1;
+  MainForm: TMainForm;
 
 implementation
 
@@ -31,7 +35,7 @@ uses
 
 {$R *.dfm}
 
-procedure TForm1.btnMSHClick(Sender: TObject);
+procedure TMainForm.btnMSHClick(Sender: TObject);
 var
   MSH: TMSH;
 begin
@@ -44,7 +48,33 @@ begin
   end;
 end;
 
-procedure TForm1.btnPatientClick(Sender: TObject);
+procedure TMainForm.btnOBRClick(Sender: TObject);
+var
+  OBR: TOBR;
+begin
+  OBR := TOBR.Create(meMsg.Lines[2]);
+  try
+    meParse.Clear;
+    meParse.Lines.Add(OBR.ToString);
+  finally
+    OBR.Free;
+  end;
+end;
+
+procedure TMainForm.btnOBXClick(Sender: TObject);
+var
+  OBX: TOBX;
+begin
+  OBX := TOBX.Create(meMsg.Lines[3]);
+  try
+    meParse.Clear;
+    meParse.Lines.Add(OBX.ToString);
+  finally
+    OBX.Free;
+  end;
+end;
+
+procedure TMainForm.btnPatientClick(Sender: TObject);
 var
   Patient: TPatient;
 begin
