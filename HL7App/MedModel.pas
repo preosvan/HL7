@@ -157,7 +157,93 @@ type
 
   //Observation Report
   TOBR = class(THL7Segment)
-
+  private
+    function GetAssistantResultInterpreter: string;
+    function GetChargeToPractice: string;
+    function GetCollectionVolume: string;
+    function GetCollectorIdentifier: string;
+    function GetCollectorsComment: string;
+    function GetDangerCode: string;
+    function GetDiagnosticServSectID: string;
+    function GetEscortRequired: string;
+    function GetFillerField1: string;
+    function GetFillerField2: string;
+    function GetFillerOrderNumber: string;
+    function GetNumberOfSampleContainers: string;
+    function GetObservationDateTime: string;
+    function GetObservationEndDateTime: string;
+    function GetOrderCallbackPhoneNumber: string;
+    function GetOrderingProvider: string;
+    function GetParent: string;
+    function GetParentResult: string;
+    function GetPlacerField1: string;
+    function GetPlacerField2: string;
+    function GetPlacerOrderNumber: string;
+    function GetPlannedPatientTransportComment: string;
+    function GetPrincipalResultInterpreter: string;
+    function GetPriority: string;
+    function GetQuantityOrTiming: string;
+    function GetReasonForStudy: string;
+    function GetRelevantClinicalInfo: string;
+    function GetRequestedDateTime: string;
+    function GetResultCopiesTo: string;
+    function GetResultsRptStatusChngDateTime: string;
+    function GetResultStatus: string;
+    function GetScheduledDateTime: string;
+    function GetSpecimenActionCode: string;
+    function GetSpecimenReceivedDateTime: string;
+    function GetSpecimenSource: string;
+    function GetTechnician: string;
+    function GetTranscriptionist: string;
+    function GetTransportArranged: string;
+    function GetTransportArrangementResponsibility: string;
+    function GetTransportationMode: string;
+    function GetTransportLogisticsOfCollectedSample: string;
+    function GetUniversalServiceID: string;
+  public
+    function ToString: string; override;
+    property PlacerOrderNumber: string read GetPlacerOrderNumber;
+    property FillerOrderNumber: string read GetFillerOrderNumber;
+    property UniversalServiceID: string read GetUniversalServiceID;
+    property Priority: string read GetPriority;
+    property RequestedDateTime: string read GetRequestedDateTime;
+    property ObservationDateTime: string read GetObservationDateTime;
+    property ObservationEndDateTime: string read GetObservationEndDateTime;
+    property CollectionVolume: string read GetCollectionVolume;
+    property CollectorIdentifier: string read GetCollectorIdentifier;
+    property SpecimenActionCode: string read GetSpecimenActionCode;
+    property DangerCode: string read GetDangerCode;
+    property RelevantClinicalInfo: string read GetRelevantClinicalInfo;
+    property SpecimenReceivedDateTime: string read GetSpecimenReceivedDateTime;
+    property SpecimenSource: string read GetSpecimenSource;
+    property OrderingProvider: string read GetOrderingProvider;
+    property OrderCallbackPhoneNumber: string read GetOrderCallbackPhoneNumber;
+    property PlacerField1: string read GetPlacerField1;
+    property PlacerField2: string read GetPlacerField2;
+    property FillerField1: string read GetFillerField1;
+    property FillerField2: string read GetFillerField2;
+    property ResultsRptStatusChngDateTime: string read GetResultsRptStatusChngDateTime;
+    property ChargeToPractice: string read GetChargeToPractice;
+    property DiagnosticServSectID: string read GetDiagnosticServSectID;
+    property ResultStatus: string read GetResultStatus;
+    property ParentResult: string read GetParentResult;
+    property QuantityOrTiming: string read GetQuantityOrTiming;
+    property ResultCopiesTo: string read GetResultCopiesTo;
+    property Parent: string read GetParent;
+    property TransportationMode: string read GetTransportationMode;
+    property ReasonForStudy: string read GetReasonForStudy;
+    property PrincipalResultInterpreter: string read GetPrincipalResultInterpreter;
+    property AssistantResultInterpreter: string read GetAssistantResultInterpreter;
+    property Technician: string read GetTechnician;
+    property Transcriptionist: string read GetTranscriptionist;
+    property ScheduledDateTime: string read GetScheduledDateTime;
+    property NumberOfSampleContainers: string read GetNumberOfSampleContainers;
+    property TransportLogisticsOfCollectedSample: string read GetTransportLogisticsOfCollectedSample;
+    property CollectorsComment: string read GetCollectorsComment;
+    property TransportArrangementResponsibility: string read GetTransportArrangementResponsibility;
+    property TransportArranged: string read GetTransportArranged;
+    property EscortRequired: string read GetEscortRequired;
+    property PlannedPatientTransportComment: string read GetPlannedPatientTransportComment;
   end;
 
   //
@@ -338,40 +424,38 @@ begin
 end;
 
 function TPID.ToString: string;
-const
-  DELIM = '|';
 begin
   Result := inherited;
-  Result := Result + DELIM +
-            PatientID + DELIM +
-            PatientIDExt + DELIM +
-            PatientIDInt + DELIM +
-            PatientIDAlt + DELIM +
-            PatientName + DELIM +
-            MothMaidenName + DELIM +
-            DateToMedDateStr(DTBirth) + DELIM +
-            Gender + DELIM +
-            PatientAlias + DELIM +
-            Race + DELIM +
-            Address + DELIM +
-            CountyCode + DELIM +
-            PhoneNumbHome + DELIM +
-            PhoneNumbBusiness + DELIM +
-            PrimaryLanguage + DELIM +
-            MaritalStatus + DELIM +
-            Religion + DELIM +
-            PatientAccountNumber + DELIM +
-            SSNNumb + DELIM +
-            DriverLicNumb + DELIM +
-            MothersIdentifie + DELIM +
-            EthnicGroup + DELIM +
-            BirthPlace + DELIM +
-            MultipleBirthIndicator + DELIM +
-            BirthOrder + DELIM +
-            Citizenship + DELIM +
-            VeteransMilitaryStatus + DELIM +
-            Nationality + DELIM +
-            PatientDeathDateTime + DELIM +
+  Result := Result + HL7_SEPARATOR +
+            PatientID + HL7_SEPARATOR +
+            PatientIDExt + HL7_SEPARATOR +
+            PatientIDInt + HL7_SEPARATOR +
+            PatientIDAlt + HL7_SEPARATOR +
+            PatientName + HL7_SEPARATOR +
+            MothMaidenName + HL7_SEPARATOR +
+            DateToMedDateStr(DTBirth) + HL7_SEPARATOR +
+            Gender + HL7_SEPARATOR +
+            PatientAlias + HL7_SEPARATOR +
+            Race + HL7_SEPARATOR +
+            Address + HL7_SEPARATOR +
+            CountyCode + HL7_SEPARATOR +
+            PhoneNumbHome + HL7_SEPARATOR +
+            PhoneNumbBusiness + HL7_SEPARATOR +
+            PrimaryLanguage + HL7_SEPARATOR +
+            MaritalStatus + HL7_SEPARATOR +
+            Religion + HL7_SEPARATOR +
+            PatientAccountNumber + HL7_SEPARATOR +
+            SSNNumb + HL7_SEPARATOR +
+            DriverLicNumb + HL7_SEPARATOR +
+            MothersIdentifie + HL7_SEPARATOR +
+            EthnicGroup + HL7_SEPARATOR +
+            BirthPlace + HL7_SEPARATOR +
+            MultipleBirthIndicator + HL7_SEPARATOR +
+            BirthOrder + HL7_SEPARATOR +
+            Citizenship + HL7_SEPARATOR +
+            VeteransMilitaryStatus + HL7_SEPARATOR +
+            Nationality + HL7_SEPARATOR +
+            PatientDeathDateTime + HL7_SEPARATOR +
             PatientDeathIndicator;
 end;
 
@@ -379,47 +463,47 @@ end;
 
 function TPatient.GetAddress1: string;
 begin
-  Result := GetSubElement(Address, '^', Integer(psaAddress1));
+  Result := GetSubElement(Address, HL7_SEPARATOR_COMPONENT, Integer(psaAddress1));
 end;
 
 function TPatient.GetAddress2: string;
 begin
-  Result := GetSubElement(Address, '^', Integer(psaAddress2));
+  Result := GetSubElement(Address, HL7_SEPARATOR_COMPONENT, Integer(psaAddress2));
 end;
 
 function TPatient.GetCity: string;
 begin
-  Result := GetSubElement(Address, '^', Integer(psaCity));
+  Result := GetSubElement(Address, HL7_SEPARATOR_COMPONENT, Integer(psaCity));
 end;
 
 function TPatient.GetFirstname: string;
 begin
-  Result := GetSubElement(PatientName, '^', Integer(psnFirstName));
+  Result := GetSubElement(PatientName, HL7_SEPARATOR_COMPONENT, Integer(psnFirstName));
 end;
 
 function TPatient.GetInitials: string;
 begin
-  Result := GetSubElement(PatientName, '^', Integer(psnInitials));
+  Result := GetSubElement(PatientName, HL7_SEPARATOR_COMPONENT, Integer(psnInitials));
 end;
 
 function TPatient.GetPostalCode: string;
 begin
-  Result := GetSubElement(Address, '^', Integer(psaPostalCode));
+  Result := GetSubElement(Address, HL7_SEPARATOR_COMPONENT, Integer(psaPostalCode));
 end;
 
 function TPatient.GetProvinceCode: string;
 begin
-  Result := GetSubElement(Address, '^', Integer(psaProvinceCode));
+  Result := GetSubElement(Address, HL7_SEPARATOR_COMPONENT, Integer(psaProvinceCode));
 end;
 
 function TPatient.GetSEERCountryGeocode: string;
 begin
-  Result := GetSubElement(Address, '^', Integer(psaSEERCountryGeocode));
+  Result := GetSubElement(Address, HL7_SEPARATOR_COMPONENT, Integer(psaSEERCountryGeocode));
 end;
 
 function TPatient.GetSurname: string;
 begin
-  Result := GetSubElement(PatientName, '^', Integer(psnSurname));
+  Result := GetSubElement(PatientName, HL7_SEPARATOR_COMPONENT, Integer(psnSurname));
 end;
 
 { THL7Segment }
@@ -427,7 +511,7 @@ end;
 constructor THL7Segment.Create(AMsgText: string);
 begin
   FMsgText := TStringList.Create;
-  FMsgText.Delimiter := '|';
+  FMsgText.Delimiter := HL7_SEPARATOR;
   FMsgText.DelimitedText := AMsgText;
 end;
 
@@ -574,29 +658,289 @@ begin
 end;
 
 function TMSH.ToString: string;
-const
-  DELIM = '|';
 begin
   Result := inherited;
-  Result := Result + DELIM +
-            EncodingCharacters + DELIM +
-            SendingApp + DELIM +
-            SendingFacility + DELIM +
-            ReceivingApp + DELIM +
-            ReceivingFacility + DELIM +
-            DateTimeToMedDateTimeStr(DateTimeMsg) + DELIM +
-            Security + DELIM +
-            MessageType + DELIM +
-            MessageControlID + DELIM +
-            ProcessingID + DELIM +
-            VersionID + DELIM +
-            SequenceNumber + DELIM +
-            ContinuationPointer + DELIM +
-            AcceptAcknowledgmentType + DELIM +
-            ApplicationAcknowledgmentType + DELIM +
-            CountryCode + DELIM +
-            CharacterSet + DELIM +
-            PrincipalLangMsg + DELIM;
+  Result := Result + HL7_SEPARATOR +
+            EncodingCharacters + HL7_SEPARATOR +
+            SendingApp + HL7_SEPARATOR +
+            SendingFacility + HL7_SEPARATOR +
+            ReceivingApp + HL7_SEPARATOR +
+            ReceivingFacility + HL7_SEPARATOR +
+            DateTimeToMedDateTimeStr(DateTimeMsg) + HL7_SEPARATOR +
+            Security + HL7_SEPARATOR +
+            MessageType + HL7_SEPARATOR +
+            MessageControlID + HL7_SEPARATOR +
+            ProcessingID + HL7_SEPARATOR +
+            VersionID + HL7_SEPARATOR +
+            SequenceNumber + HL7_SEPARATOR +
+            ContinuationPointer + HL7_SEPARATOR +
+            AcceptAcknowledgmentType + HL7_SEPARATOR +
+            ApplicationAcknowledgmentType + HL7_SEPARATOR +
+            CountryCode + HL7_SEPARATOR +
+            CharacterSet + HL7_SEPARATOR +
+            PrincipalLangMsg + HL7_SEPARATOR;
 end;
 
+{ TOBR }
+
+function TOBR.GetAssistantResultInterpreter: string;
+begin
+  Result := GetValue(Integer(obreAssistantResultInterpreter));
+end;
+
+function TOBR.GetChargeToPractice: string;
+begin
+  Result := GetValue(Integer(obreChargeToPractice));
+end;
+
+function TOBR.GetCollectionVolume: string;
+begin
+  Result := GetValue(Integer(obreCollectionVolume));
+end;
+
+function TOBR.GetCollectorIdentifier: string;
+begin
+  Result := GetValue(Integer(obreCollectorIdentifier));
+end;
+
+function TOBR.GetCollectorsComment: string;
+begin
+  Result := GetValue(Integer(obreCollectorsComment));
+end;
+
+function TOBR.GetDangerCode: string;
+begin
+  Result := GetValue(Integer(obreDangerCode));
+end;
+
+function TOBR.GetDiagnosticServSectID: string;
+begin
+  Result := GetValue(Integer(obreDiagnosticServSectID));
+end;
+
+function TOBR.GetEscortRequired: string;
+begin
+  Result := GetValue(Integer(obreEscortRequired));
+end;
+
+function TOBR.GetFillerField1: string;
+begin
+  Result := GetValue(Integer(obreFillerField1));
+end;
+
+function TOBR.GetFillerField2: string;
+begin
+  Result := GetValue(Integer(obreFillerField2));
+end;
+
+function TOBR.GetFillerOrderNumber: string;
+begin
+  Result := GetValue(Integer(obreFillerOrderNumber));
+end;
+
+function TOBR.GetNumberOfSampleContainers: string;
+begin
+  Result := GetValue(Integer(obreNumberOfSampleContainers));
+end;
+
+function TOBR.GetObservationDateTime: string;
+begin
+  Result := GetValue(Integer(obreObservationDateTime));
+end;
+
+function TOBR.GetObservationEndDateTime: string;
+begin
+  Result := GetValue(Integer(obreObservationEndDateTime));
+end;
+
+function TOBR.GetOrderCallbackPhoneNumber: string;
+begin
+  Result := GetValue(Integer(obreOrderCallbackPhoneNumber));
+end;
+
+function TOBR.GetOrderingProvider: string;
+begin
+  Result := GetValue(Integer(obreOrderingProvider));
+end;
+
+function TOBR.GetParent: string;
+begin
+  Result := GetValue(Integer(obreParent));
+end;
+
+function TOBR.GetParentResult: string;
+begin
+  Result := GetValue(Integer(obreParentResult));
+end;
+
+function TOBR.GetPlacerField1: string;
+begin
+  Result := GetValue(Integer(obrePlacerField1));
+end;
+
+function TOBR.GetPlacerField2: string;
+begin
+  Result := GetValue(Integer(obrePlacerField2));
+end;
+
+function TOBR.GetPlacerOrderNumber: string;
+begin
+  Result := GetValue(Integer(obrePlacerOrderNumber));
+end;
+
+function TOBR.GetPlannedPatientTransportComment: string;
+begin
+  Result := GetValue(Integer(obrePlannedPatientTransportComment));
+end;
+
+function TOBR.GetPrincipalResultInterpreter: string;
+begin
+  Result := GetValue(Integer(obrePrincipalResultInterpreter));
+end;
+
+function TOBR.GetPriority: string;
+begin
+  Result := GetValue(Integer(obrePriority));
+end;
+
+function TOBR.GetQuantityOrTiming: string;
+begin
+  Result := GetValue(Integer(obreQuantityOrTiming));
+end;
+
+function TOBR.GetReasonForStudy: string;
+begin
+  Result := GetValue(Integer(obreReasonForStudy));
+end;
+
+function TOBR.GetRelevantClinicalInfo: string;
+begin
+  Result := GetValue(Integer(obreRelevantClinicalInfo));
+end;
+
+function TOBR.GetRequestedDateTime: string;
+begin
+  Result := GetValue(Integer(obreRequestedDateTime));
+end;
+
+function TOBR.GetResultCopiesTo: string;
+begin
+  Result := GetValue(Integer(obreResultCopiesTo));
+end;
+
+function TOBR.GetResultsRptStatusChngDateTime: string;
+begin
+  Result := GetValue(Integer(obreResultsRptStatusChngDateTime));
+end;
+
+function TOBR.GetResultStatus: string;
+begin
+  Result := GetValue(Integer(obreResultStatus));
+end;
+
+function TOBR.GetScheduledDateTime: string;
+begin
+  Result := GetValue(Integer(obreScheduledDateTime));
+end;
+
+function TOBR.GetSpecimenActionCode: string;
+begin
+  Result := GetValue(Integer(obreSpecimenActionCode));
+end;
+
+function TOBR.GetSpecimenReceivedDateTime: string;
+begin
+  Result := GetValue(Integer(obreSpecimenReceivedDateTime));
+end;
+
+function TOBR.GetSpecimenSource: string;
+begin
+  Result := GetValue(Integer(obreSpecimenSource));
+end;
+
+function TOBR.GetTechnician: string;
+begin
+  Result := GetValue(Integer(obreTechnician));
+end;
+
+function TOBR.GetTranscriptionist: string;
+begin
+  Result := GetValue(Integer(obreTranscriptionist));
+end;
+
+function TOBR.GetTransportArranged: string;
+begin
+  Result := GetValue(Integer(obreTransportArranged));
+end;
+
+function TOBR.GetTransportArrangementResponsibility: string;
+begin
+  Result := GetValue(Integer(obreTransportArrangementResponsibility));
+end;
+
+function TOBR.GetTransportationMode: string;
+begin
+  Result := GetValue(Integer(obreTransportationMode));
+end;
+
+function TOBR.GetTransportLogisticsOfCollectedSample: string;
+begin
+  Result := GetValue(Integer(obreTransportLogisticsOfCollectedSample));
+end;
+
+function TOBR.GetUniversalServiceID: string;
+begin
+  Result := GetValue(Integer(obreUniversalServiceID));
+end;
+
+function TOBR.ToString: string;
+begin
+  Result := inherited;
+  Result := Result + HL7_SEPARATOR +
+            PlacerOrderNumber + HL7_SEPARATOR +
+            FillerOrderNumber + HL7_SEPARATOR +
+            UniversalServiceID + HL7_SEPARATOR +
+            Priority + HL7_SEPARATOR +
+            RequestedDateTime + HL7_SEPARATOR +
+            ObservationDateTime + HL7_SEPARATOR +
+            ObservationEndDateTime + HL7_SEPARATOR +
+            CollectionVolume + HL7_SEPARATOR +
+            CollectorIdentifier + HL7_SEPARATOR +
+            SpecimenActionCode + HL7_SEPARATOR +
+            DangerCode + HL7_SEPARATOR +
+            RelevantClinicalInfo + HL7_SEPARATOR +
+            SpecimenReceivedDateTime + HL7_SEPARATOR +
+            SpecimenSource + HL7_SEPARATOR +
+            OrderingProvider + HL7_SEPARATOR +
+            OrderCallbackPhoneNumber + HL7_SEPARATOR +
+            PlacerField1 + HL7_SEPARATOR +
+            PlacerField2 + HL7_SEPARATOR +
+            FillerField1 + HL7_SEPARATOR +
+            FillerField2 + HL7_SEPARATOR +
+            ResultsRptStatusChngDateTime + HL7_SEPARATOR +
+            ChargeToPractice + HL7_SEPARATOR +
+            DiagnosticServSectID + HL7_SEPARATOR +
+            ResultStatus + HL7_SEPARATOR +
+            ParentResult + HL7_SEPARATOR +
+            QuantityOrTiming + HL7_SEPARATOR +
+            ResultCopiesTo + HL7_SEPARATOR +
+            Parent + HL7_SEPARATOR +
+            TransportationMode + HL7_SEPARATOR +
+            ReasonForStudy + HL7_SEPARATOR +
+            PrincipalResultInterpreter + HL7_SEPARATOR +
+            AssistantResultInterpreter + HL7_SEPARATOR +
+            Technician + HL7_SEPARATOR +
+            Transcriptionist + HL7_SEPARATOR +
+            ScheduledDateTime + HL7_SEPARATOR +
+            NumberOfSampleContainers + HL7_SEPARATOR +
+            TransportLogisticsOfCollectedSample + HL7_SEPARATOR +
+            CollectorsComment + HL7_SEPARATOR +
+            TransportArrangementResponsibility + HL7_SEPARATOR +
+            TransportArranged + HL7_SEPARATOR +
+            EscortRequired + HL7_SEPARATOR +
+            PlannedPatientTransportComment + HL7_SEPARATOR;
+end;
+
+
 end.
+

@@ -129,6 +129,10 @@ type
                         psaPostalCode,
                         psaSEERCountryGeocode);
 
+const
+  HL7_SEPARATOR = '|';
+  HL7_SEPARATOR_COMPONENT = '^';
+
 implementation
 
 end.
