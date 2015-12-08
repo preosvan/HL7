@@ -20,10 +20,6 @@ object Form1: TForm1
     Height = 484
     Align = alClient
     TabOrder = 0
-    ExplicitLeft = 8
-    ExplicitTop = 134
-    ExplicitWidth = 457
-    ExplicitHeight = 89
   end
   object pnBottom: TPanel
     Left = 0
@@ -32,20 +28,27 @@ object Form1: TForm1
     Height = 41
     Align = alBottom
     TabOrder = 1
-    ExplicitLeft = 72
-    ExplicitTop = 416
-    ExplicitWidth = 185
     DesignSize = (
       738
       41)
+    object btnMSH: TButton
+      Left = 480
+      Top = 6
+      Width = 121
+      Height = 25
+      Anchors = [akTop, akRight]
+      Caption = 'MSH'
+      TabOrder = 0
+      OnClick = btnMSHClick
+    end
     object btnPatient: TButton
-      Left = 608
+      Left = 607
       Top = 6
       Width = 121
       Height = 25
       Anchors = [akTop, akRight]
       Caption = 'Patient'
-      TabOrder = 0
+      TabOrder = 1
       OnClick = btnPatientClick
     end
   end
@@ -57,11 +60,13 @@ object Form1: TForm1
     Align = alTop
     Lines.Strings = (
       
+        'MSH|^~\&|XXXX|C|PRIORITYHEALTH|PRIORITYHEALTH|20080511103530||OR' +
+        'U^R01|Q335939501T337311002|P|2.3|||'
+      
         'PID|1|2|001677980|3|SMITH^CURTIS^SC|MothersMaidenName|19680219|M' +
         '|PatientAlias|Race|Address1^Address2^City^ProvinceCode^PostalCod' +
         'e^SEERCountryGeocode|||||||929645156318|123456789|')
     TabOrder = 2
     WordWrap = False
-    ExplicitWidth = 475
   end
 end

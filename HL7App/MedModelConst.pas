@@ -3,7 +3,25 @@ unit MedModelConst;
 interface
 
 type
-  TMSHElement = (msheSegnentName);
+  TMSHElement = (msheSegnentName,
+                 msheEncodingCharacters,
+                 msheSendingApp,
+                 msheSendingFacility,
+                 msheReceivingApp,
+                 msheReceivingFacility,
+                 msheDateTimeMsg,
+                 msheSecurity,
+                 msheMessageType,
+                 msheMessageControlID,
+                 msheProcessingID,
+                 msheVersionID,
+                 msheSequenceNumber,
+                 msheContinuationPointer,
+                 msheAcceptAcknowledgmentType,
+                 msheApplicationAcknowledgmentType,
+                 msheCountryCode,
+                 msheCharacterSet,
+                 mshePrincipalLangMsg);
 
   TPIDElement = (pideSegmentName,
                  pidePatientID,

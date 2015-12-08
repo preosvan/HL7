@@ -10,8 +10,10 @@ type
   TForm1 = class(TForm)
     meMsg: TMemo;
     meParse: TMemo;
-    btnPatient: TButton;
+    btnMSH: TButton;
     pnBottom: TPanel;
+    btnPatient: TButton;
+    procedure btnMSHClick(Sender: TObject);
     procedure btnPatientClick(Sender: TObject);
   private
     { Private declarations }
@@ -29,19 +31,34 @@ uses
 
 {$R *.dfm}
 
+procedure TForm1.btnMSHClick(Sender: TObject);
+var
+  MSH: TMSH;
+begin
+  MSH := TMSH.Create(meMsg.Lines[0]);
+  try
+    meParse.Clear;
+    meParse.Lines.Add(MSH.ToString);
+  finally
+    MSH.Free;
+  end;
+end;
+
 procedure TForm1.btnPatientClick(Sender: TObject);
 var
   Patient: TPatient;
 begin
-  Patient := TPatient.Create(meMsg.Lines[0]);
+  Patient := TPatient.Create(meMsg.Lines[1]);
   try
     meParse.Lines.Clear;
+    meParse.Lines.Add(Patient.ToString);
+    meParse.Lines.Add('==============================');
     meParse.Lines.Add(Patient.HL7SegmentName);
     meParse.Lines.Add('==============================');
-    meParse.Lines.Add(IntToStr(Patient.PatientID));
-    meParse.Lines.Add(IntToStr(Patient.PatientIDExt));
-    meParse.Lines.Add(IntToStr(Patient.PatientIDInt));
-    meParse.Lines.Add(IntToStr(Patient.PatientIDAlt));
+    meParse.Lines.Add(Patient.PatientID);
+    meParse.Lines.Add(Patient.PatientIDExt);
+    meParse.Lines.Add(Patient.PatientIDInt);
+    meParse.Lines.Add(Patient.PatientIDAlt);
     meParse.Lines.Add('==============================');
     meParse.Lines.Add(Patient.PatientName);
     meParse.Lines.Add(Patient.Surname);
