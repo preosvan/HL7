@@ -4,6 +4,7 @@ interface
 
 function DateToMedDateStr(ADate: TDate): string;
 function DateTimeToMedDateTimeStr(ADateTime: TDateTime): string;
+function DateToSQLiteDateStr(ADate: TDate): string;
 function GetSubElement(AElement: string; ADelimiter: Char;
   AIdxSubElement: Integer): string;
 function MedDateStrToDate(AMedDate: string): TDate;
@@ -16,6 +17,15 @@ uses
   System.Classes,
   DateUtils,
   MedModelConst;
+
+function DateToSQLiteDateStr(ADate: TDate): string;
+var
+  FS: TFormatSettings;
+begin
+  FS.ShortDateFormat := 'YYYY-MM-DD';
+  FS.DateSeparator := '-';
+  Result := DateToStr(ADate, FS);
+end;
 
 function MedDateStrToDate(AMedDate: string): TDate;
 var

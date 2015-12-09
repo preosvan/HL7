@@ -15,10 +15,12 @@ type
     btnPatient: TButton;
     btnOBR: TButton;
     btnOBX: TButton;
+    btnSave: TButton;
     procedure btnMSHClick(Sender: TObject);
     procedure btnPatientClick(Sender: TObject);
     procedure btnOBRClick(Sender: TObject);
     procedure btnOBXClick(Sender: TObject);
+    procedure btnSaveClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -31,7 +33,7 @@ var
 implementation
 
 uses
-  MedModel;
+  MedModel, DMUnit;
 
 {$R *.dfm}
 
@@ -85,7 +87,7 @@ begin
     meParse.Lines.Add('==============================');
     meParse.Lines.Add(Patient.HL7SegmentName);
     meParse.Lines.Add('==============================');
-    meParse.Lines.Add(Patient.PatientID);
+    meParse.Lines.Add(Patient.PatientID.ToString);
     meParse.Lines.Add(Patient.PatientIDExt);
     meParse.Lines.Add(Patient.PatientIDInt);
     meParse.Lines.Add(Patient.PatientIDAlt);
@@ -117,6 +119,18 @@ begin
     meParse.Lines.Add(Patient.DriverLicNumb);
   finally
     Patient.Free;
+  end;
+end;
+
+procedure TMainForm.btnSaveClick(Sender: TObject);
+var
+  HL7Message: THL7Message;
+begin
+  HL7Message := THL7Message.Create(meMSG.Lines);
+  try
+    HL7Message.SaveToDB(DM.SQLQuery);
+  finally
+    HL7Message.Free;
   end;
 end;
 

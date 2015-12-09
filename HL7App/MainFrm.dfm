@@ -34,44 +34,50 @@ object MainForm: TMainForm
       738
       41)
     object btnMSH: TButton
-      Left = 224
+      Left = 16
       Top = 6
       Width = 121
       Height = 25
-      Anchors = [akTop, akRight]
       Caption = 'MSH'
       TabOrder = 0
       OnClick = btnMSHClick
     end
     object btnPatient: TButton
-      Left = 351
+      Left = 143
       Top = 6
       Width = 121
       Height = 25
-      Anchors = [akTop, akRight]
       Caption = 'Patient'
       TabOrder = 1
       OnClick = btnPatientClick
     end
     object btnOBR: TButton
-      Left = 478
+      Left = 270
       Top = 6
       Width = 121
       Height = 25
-      Anchors = [akTop, akRight]
       Caption = 'OBR'
       TabOrder = 2
       OnClick = btnOBRClick
     end
     object btnOBX: TButton
+      Left = 397
+      Top = 6
+      Width = 121
+      Height = 25
+      Caption = 'OBX'
+      TabOrder = 3
+      OnClick = btnOBXClick
+    end
+    object btnSave: TButton
       Left = 605
       Top = 6
       Width = 121
       Height = 25
       Anchors = [akTop, akRight]
-      Caption = 'OBX'
-      TabOrder = 3
-      OnClick = btnOBXClick
+      Caption = 'Save MSG'
+      TabOrder = 4
+      OnClick = btnSaveClick
     end
   end
   object meMsg: TMemo

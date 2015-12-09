@@ -4,7 +4,7 @@ interface
 
 uses
   System.Classes,
-  MedModelConst;
+  MedModelConst, Data.SqlExpr;
 
 type
   THL7Segment = class
@@ -73,7 +73,7 @@ type
     function GetGender: string;
     function GetMaritalStatus: string;
     function GetMothMaidenName: string;
-    function GetPatientID: string;
+    function GetPatientID: Integer;
     function GetPatientIDAlt: string;
     function GetPatientIDExt: string;
     function GetPatientIDInt: string;
@@ -98,7 +98,7 @@ type
     function GetVeteransMilitaryStatus: string;
   public
     function ToString: string; override;
-    property PatientID: string read GetPatientID;
+    property PatientID: Integer read GetPatientID;
     property PatientIDExt: string read GetPatientIDExt;
     property PatientIDInt: string read GetPatientIDInt;
     property PatientIDAlt: string read GetPatientIDAlt;
@@ -141,11 +141,13 @@ type
     function GetPostalCode: string;
     function GetProvinceCode: string;
     function GetSEERCountryGeocode: string;
+    function GetFullName: string;
   public
     //Name
     property Surname: string read GetSurname;
     property Firstname: string read GetFirstname;
     property Initials: string read GetInitials;
+    property FullName: string read GetFullName;
     //Address
     property Address1: string read GetAddress1;
     property Address2: string read GetAddress2;
@@ -291,9 +293,11 @@ type
     FOBR: TOBR;
     FPID: TPID;
     FOBX: TOBX;
+    procedure SavePatient(ASQLQuery: TSQLQuery);
   public
-    constructor Create(AMsg: TStringList);
+    constructor Create(AMsg: TStrings);
     destructor Destroy; override;
+    procedure SaveToDB(ASQLQuery: TSQLQuery);
     property MSH: TMSH read FMSH;
     property PID: TPID read FPID;
     property OBR: TOBR read FOBR;
@@ -303,7 +307,9 @@ type
 implementation
 
 uses
-  System.SysUtils, MedUtils;
+  System.SysUtils,
+  DateUtils,
+  MedUtils, Data.SqlTimSt;
 
 { TPatient }
 
@@ -397,9 +403,9 @@ begin
   Result := GetValue(Integer(pidePatientDeathIndicator));
 end;
 
-function TPID.GetPatientID: string;
+function TPID.GetPatientID: Integer;
 begin
-  Result := GetValue(Integer(pidePatientID));
+  Result := StrToIntDef(GetValue(Integer(pidePatientID)), 0);
 end;
 
 function TPID.GetPatientIDAlt: string;
@@ -461,7 +467,7 @@ function TPID.ToString: string;
 begin
   Result := inherited;
   Result := Result + HL7_SEPARATOR +
-            PatientID + HL7_SEPARATOR +
+            PatientID.ToString + HL7_SEPARATOR +
             PatientIDExt + HL7_SEPARATOR +
             PatientIDInt + HL7_SEPARATOR +
             PatientIDAlt + HL7_SEPARATOR +
@@ -513,6 +519,11 @@ end;
 function TPatient.GetFirstname: string;
 begin
   Result := GetSubElement(PatientName, HL7_SEPARATOR_COMPONENT, Integer(psnFirstName));
+end;
+
+function TPatient.GetFullName: string;
+begin
+  Result := Trim(Surname + ' ' + Firstname + ' ' + Initials);
 end;
 
 function TPatient.GetInitials: string;
@@ -575,7 +586,7 @@ end;
 
 { THL7Message }
 
-constructor THL7Message.Create(AMsg: TStringList);
+constructor THL7Message.Create(AMsg: TStrings);
 begin
   if AMsg.Count > 3 then
   begin
@@ -597,6 +608,67 @@ begin
   if Assigned(FOBX) then
     FOBX.Free;
   inherited;
+end;
+
+procedure THL7Message.SavePatient(ASQLQuery: TSQLQuery);
+var
+  Patient: TPatient;
+  SqlStr: string;
+begin
+  Patient := TPatient(PID);
+  if Patient.PatientID > 0 then
+  begin
+    SqlStr := 'INSERT OR REPLACE INTO patient ' +
+              '(patient_id, ' +
+              ' last_name, ' +
+              ' first_name, ' +
+              ' date_of_birth, ' +
+              ' business_phone, ' +
+              ' home_phone, ' +
+              ' address, ' +
+              ' city, ' +
+              ' state_province, ' +
+              ' zip_postal_code, ' +
+              ' country_region, ' +
+              ' gender, ' +
+              ' marital_status, ' +
+              ' full_name) ' +
+              'VALUES (:patient_id, ' +
+                      ':last_name, ' +
+                      ':first_name, ' +
+                      ':date_of_birth, ' +
+                      ':business_phone, ' +
+                      ':home_phone, ' +
+                      ':address, ' +
+                      ':city, ' +
+                      ':state_province, ' +
+                      ':zip_postal_code, ' +
+                      ':country_region, ' +
+                      ':gender, ' +
+                      ':marital_status, ' +
+                      ':full_name)';
+    ASQLQuery.SQL.Text := SqlStr;
+    ASQLQuery.ParamByName('patient_id').AsInteger := Patient.PatientID;
+    ASQLQuery.ParamByName('last_name').AsString := Patient.Surname;
+    ASQLQuery.ParamByName('first_name').AsString := Patient.Firstname;
+    ASQLQuery.ParamByName('date_of_birth').AsString := DateToSQLiteDateStr(Patient.DTBirth);
+    ASQLQuery.ParamByName('business_phone').AsString := Patient.PhoneNumbBusiness;
+    ASQLQuery.ParamByName('home_phone').AsString := Patient.PhoneNumbHome;
+    ASQLQuery.ParamByName('address').AsString := Patient.Address1 + ' ' + Patient.Address2;
+    ASQLQuery.ParamByName('city').AsString := Patient.City;
+    ASQLQuery.ParamByName('state_province').AsString := Patient.ProvinceCode;
+    ASQLQuery.ParamByName('zip_postal_code').AsString := Patient.PostalCode;
+    ASQLQuery.ParamByName('country_region').AsString := Patient.CountyCode;
+    ASQLQuery.ParamByName('gender').AsString := Patient.Gender;
+    ASQLQuery.ParamByName('marital_status').AsString := Patient.MaritalStatus;
+    ASQLQuery.ParamByName('full_name').AsString := Patient.FullName;
+    ASQLQuery.ExecSQL;
+  end;
+end;
+
+procedure THL7Message.SaveToDB(ASQLQuery: TSQLQuery);
+begin
+  SavePatient(ASQLQuery);
 end;
 
 { TMSH }
