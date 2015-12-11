@@ -94,6 +94,7 @@
         <DCCReference Include="MedModel.pas"/>
         <DCCReference Include="MedUtils.pas"/>
         <DCCReference Include="MedModelConst.pas"/>
+        <DCCReference Include="IdHL7.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
