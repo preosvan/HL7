@@ -740,6 +740,7 @@ begin
               ' full_name) ' +
               'VALUES (:patient_id, ' +
                       ':last_name, ' +
+                      ':medical_record, ' +
                       ':first_name, ' +
                       ':date_of_birth, ' +
                       ':business_phone, ' +

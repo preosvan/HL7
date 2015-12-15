@@ -31,17 +31,11 @@ end;
 function SQLiteDateStrToDate(ADate: string): TDate;
 var
   FS: TFormatSettings;
-  DTDelim: string;
 begin
-  DTDelim := ADate;
-
-//  DTDelim := Copy(DTDelim, 1, 4) + '-' +
-//             Copy(DTDelim, 5, 2) + '-' +
-//             Copy(DTDelim, 7, 2);
   FS := TFormatSettings.Create;
   FS.ShortDateFormat := 'yyyy-mm-dd';
   FS.DateSeparator := '-';
-  Result := StrToDateDef(DTDelim, 0, FS);
+  Result := StrToDateDef(ADate, 0, FS);
 end;
 
 function MedDateStrToDate(AMedDate: string): TDate;
