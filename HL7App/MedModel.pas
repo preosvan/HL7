@@ -12,7 +12,7 @@ type
     FMsgText: TStrings;
     function GetHL7SegmentName: string;
   published
-    constructor Create(AMsgText: string);
+    constructor Create(AMsgText: string); overload;
     destructor Destroy; override;
     function GetValue(AIdxElement: Integer): string;
     function ToString: string; override;
@@ -293,10 +293,17 @@ type
     FOBR: TOBR;
     FPID: TPID;
     FOBX: TOBX;
+    class function LoadMSHById(ASQLQuery: TSQLQuery; AId: Integer): string;
+    class function LoadPIDById(var ASQLQuery: TSQLQuery; AId: Integer): string;
+    class function LoadOBRById(ASQLQuery: TSQLQuery; AId: Integer): string;
+    class function LoadOBXById(ASQLQuery: TSQLQuery; AId: Integer): string;
     procedure SavePatient(ASQLQuery: TSQLQuery);
   public
-    constructor Create(AMsg: TStrings);
+    constructor Create(AMsg: TStrings); overload;
+    constructor Create(AMsg: string); overload;
     destructor Destroy; override;
+    function ToString: string; override;
+    class function LoadById(var ASQLQuery: TSQLQuery; AId: Integer): THL7Message;
     procedure SaveToDB(ASQLQuery: TSQLQuery);
     property MSH: TMSH read FMSH;
     property PID: TPID read FPID;
@@ -597,6 +604,19 @@ begin
   end;
 end;
 
+constructor THL7Message.Create(AMsg: string);
+var
+  StringList: TStrings;
+begin
+  StringList := TStringList.Create;
+  try
+    StringList.Text := AMsg;
+    Create(StringList);
+  finally
+    StringList.Free;
+  end;
+end;
+
 destructor THL7Message.Destroy;
 begin
   if Assigned(FMSH) then
@@ -610,6 +630,90 @@ begin
   inherited;
 end;
 
+class function THL7Message.LoadById(var ASQLQuery: TSQLQuery; AId: Integer): THL7Message;
+var
+  StringList: TStrings;
+begin
+  StringList := TStringList.Create;
+  try
+    StringList.Add(LoadMSHById(ASQLQuery, AId));
+    StringList.Add(LoadPIDById(ASQLQuery, AId));
+    StringList.Add(LoadOBRById(ASQLQuery, AId));
+    StringList.Add(LoadOBXById(ASQLQuery, AId));
+    Result := THL7Message.Create(StringList);
+  finally
+    StringList.Free;
+  end;
+end;
+
+class function THL7Message.LoadMSHById(ASQLQuery: TSQLQuery; AId: Integer): string;
+begin
+  Result := 'MSH';
+end;
+
+class function THL7Message.LoadOBRById(ASQLQuery: TSQLQuery; AId: Integer): string;
+begin
+  Result := 'OBR';
+end;
+
+class function THL7Message.LoadOBXById(ASQLQuery: TSQLQuery; AId: Integer): string;
+begin
+  Result := 'OBX';
+end;
+
+class function THL7Message.LoadPIDById(var ASQLQuery: TSQLQuery; AId: Integer): string;
+begin
+  Result := 'PID';
+  ASQLQuery.SQL.Text := 'select * from patient t where t.patient_id = ' + IntToStr(AId);
+  try
+    ASQLQuery.Open;
+    if not ASQLQuery.Eof then
+    begin
+      Result := Result + HL7_SEPARATOR +
+      IntToStr(ASQLQuery.FieldByName('patient_id').AsInteger) + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      ASQLQuery.FieldByName('medical_record').AsString + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      ASQLQuery.FieldByName('last_name').AsString + HL7_SEPARATOR_COMPONENT +
+      ASQLQuery.FieldByName('first_name').AsString + HL7_SEPARATOR_COMPONENT +
+      '' +
+      DateToMedDateStr(SQLiteDateStrToDate(ASQLQuery.FieldByName('date_of_birth').AsString)) + HL7_SEPARATOR_COMPONENT +
+      '' +
+      ASQLQuery.FieldByName('gender').AsString + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      ASQLQuery.FieldByName('address').AsString + HL7_SEPARATOR_COMPONENT +
+      '' + HL7_SEPARATOR_COMPONENT +
+      ASQLQuery.FieldByName('city').AsString + HL7_SEPARATOR_COMPONENT +
+      ASQLQuery.FieldByName('state_province').AsString + HL7_SEPARATOR_COMPONENT +
+      ASQLQuery.FieldByName('zip_postal_code').AsString + HL7_SEPARATOR_COMPONENT +
+      '' + HL7_SEPARATOR_COMPONENT +
+      '' + HL7_SEPARATOR +
+      ASQLQuery.FieldByName('country_region').AsString + HL7_SEPARATOR +
+      ASQLQuery.FieldByName('home_phone').AsString + HL7_SEPARATOR_COMPONENT +
+      ASQLQuery.FieldByName('business_phone').AsString + HL7_SEPARATOR_COMPONENT +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR +
+      '' + HL7_SEPARATOR;
+    end;
+  except
+
+  end;
+end;
+
 procedure THL7Message.SavePatient(ASQLQuery: TSQLQuery);
 var
   Patient: TPatient;
@@ -621,6 +725,7 @@ begin
     SqlStr := 'INSERT OR REPLACE INTO patient ' +
               '(patient_id, ' +
               ' last_name, ' +
+              ' medical_record, ' +
               ' first_name, ' +
               ' date_of_birth, ' +
               ' business_phone, ' +
@@ -650,6 +755,7 @@ begin
     ASQLQuery.SQL.Text := SqlStr;
     ASQLQuery.ParamByName('patient_id').AsInteger := Patient.PatientID;
     ASQLQuery.ParamByName('last_name').AsString := Patient.Surname;
+    ASQLQuery.ParamByName('medical_record').AsString := Patient.PatientIDInt;
     ASQLQuery.ParamByName('first_name').AsString := Patient.Firstname;
     ASQLQuery.ParamByName('date_of_birth').AsString := DateToSQLiteDateStr(Patient.DTBirth);
     ASQLQuery.ParamByName('business_phone').AsString := Patient.PhoneNumbBusiness;
@@ -669,6 +775,22 @@ end;
 procedure THL7Message.SaveToDB(ASQLQuery: TSQLQuery);
 begin
   SavePatient(ASQLQuery);
+end;
+
+function THL7Message.ToString: string;
+var
+  StringList: TStrings;
+begin
+  StringList := TStringList.Create;
+  try
+    StringList.Add(MSH.ToString);
+    StringList.Add(PID.ToString);
+    StringList.Add(OBR.ToString);
+    StringList.Add(OBX.ToString);
+    Result := StringList.Text;
+  finally
+    StringList.Free;
+  end;
 end;
 
 { TMSH }

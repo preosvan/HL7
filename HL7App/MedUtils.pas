@@ -5,6 +5,7 @@ interface
 function DateToMedDateStr(ADate: TDate): string;
 function DateTimeToMedDateTimeStr(ADateTime: TDateTime): string;
 function DateToSQLiteDateStr(ADate: TDate): string;
+function SQLiteDateStrToDate(ADate: string): TDate;
 function GetSubElement(AElement: string; ADelimiter: Char;
   AIdxSubElement: Integer): string;
 function MedDateStrToDate(AMedDate: string): TDate;
@@ -25,6 +26,22 @@ begin
   FS.ShortDateFormat := 'YYYY-MM-DD';
   FS.DateSeparator := '-';
   Result := DateToStr(ADate, FS);
+end;
+
+function SQLiteDateStrToDate(ADate: string): TDate;
+var
+  FS: TFormatSettings;
+  DTDelim: string;
+begin
+  DTDelim := ADate;
+
+//  DTDelim := Copy(DTDelim, 1, 4) + '-' +
+//             Copy(DTDelim, 5, 2) + '-' +
+//             Copy(DTDelim, 7, 2);
+  FS := TFormatSettings.Create;
+  FS.ShortDateFormat := 'yyyy-mm-dd';
+  FS.DateSeparator := '-';
+  Result := StrToDateDef(DTDelim, 0, FS);
 end;
 
 function MedDateStrToDate(AMedDate: string): TDate;

@@ -20,8 +20,6 @@ object MainForm: TMainForm
     Height = 508
     Align = alClient
     TabOrder = 0
-    ExplicitTop = 89
-    ExplicitHeight = 484
   end
   object pnBottom: TPanel
     Left = 0
@@ -36,48 +34,68 @@ object MainForm: TMainForm
     object btnMSH: TButton
       Left = 16
       Top = 6
-      Width = 121
+      Width = 100
       Height = 25
       Caption = 'MSH'
       TabOrder = 0
       OnClick = btnMSHClick
     end
     object btnPatient: TButton
-      Left = 143
+      Left = 122
       Top = 6
-      Width = 121
+      Width = 100
       Height = 25
       Caption = 'Patient'
       TabOrder = 1
       OnClick = btnPatientClick
     end
     object btnOBR: TButton
-      Left = 270
+      Left = 228
       Top = 6
-      Width = 121
+      Width = 100
       Height = 25
       Caption = 'OBR'
       TabOrder = 2
       OnClick = btnOBRClick
     end
     object btnOBX: TButton
-      Left = 397
+      Left = 334
       Top = 6
-      Width = 121
+      Width = 100
       Height = 25
       Caption = 'OBX'
       TabOrder = 3
       OnClick = btnOBXClick
     end
     object btnSave: TButton
-      Left = 605
+      Left = 629
       Top = 6
-      Width = 121
+      Width = 100
       Height = 25
       Anchors = [akTop, akRight]
       Caption = 'Save MSG'
       TabOrder = 4
       OnClick = btnSaveClick
+    end
+    object btnSend: TButton
+      Left = 520
+      Top = 6
+      Width = 103
+      Height = 25
+      Anchors = [akTop, akRight]
+      Caption = 'Send'
+      TabOrder = 5
+      OnClick = btnSendClick
+    end
+    object SpinEditID: TSpinEdit
+      Left = 456
+      Top = 8
+      Width = 58
+      Height = 22
+      MaxValue = 0
+      MinValue = 0
+      TabOrder = 6
+      Value = 1
     end
   end
   object meMsg: TMemo

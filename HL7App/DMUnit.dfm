@@ -10,13 +10,16 @@ object DM: TDM
     LoginPrompt = False
     Params.Strings = (
       'DriverName=Sqlite'
-      'Database=E:\DelphiProjects\_Kuhtin\HL7\DB\HL7_DB.sqlite')
+      'Database=E:\DelphiProjects\_Kuhtin\HL7\DB\HL7_DB.sqlite'
+      'ColumnMetaDataSupported=False')
     Left = 32
     Top = 16
   end
   object SQLQuery: TSQLQuery
     MaxBlobSize = -1
     Params = <>
+    SQL.Strings = (
+      'SELECT * FROM patient')
     SQLConnection = SQLConnection
     Left = 32
     Top = 72

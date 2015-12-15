@@ -4,7 +4,8 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
+  Vcl.Samples.Spin;
 
 type
   TMainForm = class(TForm)
@@ -16,11 +17,14 @@ type
     btnOBR: TButton;
     btnOBX: TButton;
     btnSave: TButton;
+    btnSend: TButton;
+    SpinEditID: TSpinEdit;
     procedure btnMSHClick(Sender: TObject);
     procedure btnPatientClick(Sender: TObject);
     procedure btnOBRClick(Sender: TObject);
     procedure btnOBXClick(Sender: TObject);
     procedure btnSaveClick(Sender: TObject);
+    procedure btnSendClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -33,7 +37,7 @@ var
 implementation
 
 uses
-  MedModel, DMUnit;
+  MedModel, DMUnit, IdHL7;
 
 {$R *.dfm}
 
@@ -131,6 +135,44 @@ begin
     HL7Message.SaveToDB(DM.SQLQuery);
   finally
     HL7Message.Free;
+  end;
+end;
+
+procedure TMainForm.btnSendClick(Sender: TObject);
+var
+  S: string;
+  Msg: THL7Message;
+  MsgText: string;
+  Id: Integer;
+begin
+  Id := StrToIntDef(SpinEditID.Text, 0);
+  if Id < 1 then
+    MsgText := meMsg.Text
+  else
+  begin
+    Msg := THL7Message.LoadById(DM.SQLQuery, Id);
+    try
+      MsgText := Msg.ToString;
+    finally
+      Msg.Free;
+    end;
+  end;
+
+  DM.SentMsg := '';
+  case DM.HL7Client.SynchronousSend(MsgText, S) of
+    srError:
+      raise exception.create('internal error: ' + S);
+    srNoConnection:
+      raise exception.create('not connected');
+    srTimeout:
+      raise exception.create('no response from server');
+    srOK:
+      begin
+        meParse.Text := S;
+        meParse.Lines.Append(DM.SentMsg);
+      end;
+    srSent:
+      raise exception.create('can''t happen');
   end;
 end;
 

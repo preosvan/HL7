@@ -133,6 +133,10 @@ const
   HL7_SEPARATOR = '|';
   HL7_SEPARATOR_COMPONENT = '^';
 
+  HL7_SRV_ADDRESS = 'localhost';
+  HL7_PORT = 20032;
+
+
 implementation
 
 end.
