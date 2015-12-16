@@ -100,6 +100,7 @@ type
                  obrePlannedPatientTransportComment);
 
   TOBXElement = (obxeSegnentName,
+                 obxeOBXNumber,
                  obxeValueType,
                  obxeObservationIdentifier,
                  obxeObservationSubID,
@@ -128,6 +129,26 @@ type
                         psaProvinceCode,
                         psaPostalCode,
                         psaSEERCountryGeocode);
+
+  TAccessionFillerNumber = (afnEntityId,
+                            afnNamespaceId,
+                            afnUniversalId,
+                            afnUniversalIdType);
+
+  TSpecimenSubSource = (sssName,
+                        sssAdditives,
+                        sssFreeText,
+                        sssBodySite,
+                        sssSiteModifier,
+                        sssCollectionMethodModifier);
+
+  TSpecimenSubObservationIdent = (ssoIdentifierST,
+                                  ssoTextST,
+                                  ssoNameCodingSys,
+                                  ssoAltIdentifierST,
+                                  ssoAltTextST,
+                                  ssoAltNameCodingSys);
+
 
 const
   HL7_SEPARATOR = '|';

@@ -2,7 +2,7 @@ object MainForm: TMainForm
   Left = 0
   Top = 0
   Caption = 'Testing HL7'
-  ClientHeight = 614
+  ClientHeight = 571
   ClientWidth = 738
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -15,19 +15,22 @@ object MainForm: TMainForm
   TextHeight = 13
   object meParse: TMemo
     Left = 0
-    Top = 65
+    Top = 97
     Width = 738
-    Height = 508
+    Height = 433
     Align = alClient
     TabOrder = 0
+    ExplicitTop = 65
+    ExplicitHeight = 508
   end
   object pnBottom: TPanel
     Left = 0
-    Top = 573
+    Top = 530
     Width = 738
     Height = 41
     Align = alBottom
     TabOrder = 1
+    ExplicitTop = 573
     DesignSize = (
       738
       41)
@@ -102,7 +105,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 738
-    Height = 65
+    Height = 97
     Align = alTop
     Lines.Strings = (
       
@@ -118,7 +121,9 @@ object MainForm: TMainForm
         '20061122154733|||F|||||||||||20061122140000|'
       
         'OBX|1|NM|GLU^Glucose Lvl|59|mg/dL|65-99^65^99|L|||F|||2006112215' +
-        '4733|')
+        '4733|'
+      'OBX|2|TX|&GDT^GrossSpecimenDescription|1|'
+      'OBX|3|TX|&MDT^MicroscopicDescription|1|A|')
     TabOrder = 2
     WordWrap = False
   end

@@ -171,9 +171,9 @@ type
     function GetFillerField1: string;
     function GetFillerField2: string;
     function GetFillerOrderNumber: string;
-    function GetNumberOfSampleContainers: string;
-    function GetObservationDateTime: string;
-    function GetObservationEndDateTime: string;
+    function GetNumberOfSampleContainers: Integer;
+    function GetObservationDateTime: TDateTime;
+    function GetObservationEndDateTime: TDateTime;
     function GetOrderCallbackPhoneNumber: string;
     function GetOrderingProvider: string;
     function GetParent: string;
@@ -209,8 +209,8 @@ type
     property UniversalServiceID: string read GetUniversalServiceID;
     property Priority: string read GetPriority;
     property RequestedDateTime: string read GetRequestedDateTime;
-    property ObservationDateTime: string read GetObservationDateTime;
-    property ObservationEndDateTime: string read GetObservationEndDateTime;
+    property ObservationDateTime: TDateTime read GetObservationDateTime;
+    property ObservationEndDateTime: TDateTime read GetObservationEndDateTime;
     property CollectionVolume: string read GetCollectionVolume;
     property CollectorIdentifier: string read GetCollectorIdentifier;
     property SpecimenActionCode: string read GetSpecimenActionCode;
@@ -239,13 +239,29 @@ type
     property Technician: string read GetTechnician;
     property Transcriptionist: string read GetTranscriptionist;
     property ScheduledDateTime: string read GetScheduledDateTime;
-    property NumberOfSampleContainers: string read GetNumberOfSampleContainers;
+    property NumberOfSampleContainers: Integer read GetNumberOfSampleContainers;
     property TransportLogisticsOfCollectedSample: string read GetTransportLogisticsOfCollectedSample;
     property CollectorsComment: string read GetCollectorsComment;
     property TransportArrangementResponsibility: string read GetTransportArrangementResponsibility;
     property TransportArranged: string read GetTransportArranged;
     property EscortRequired: string read GetEscortRequired;
     property PlannedPatientTransportComment: string read GetPlannedPatientTransportComment;
+  end;
+
+  //
+  TAccessionSpec = class(TOBR)
+  private
+    function GetAccessionNumber: string;
+    function GetNamespaceId: string;
+    function GetSpecimenLabel: string;
+    function GetSurgicalProcedure: string;
+    function GetPriorityId: string;
+  public
+    property AccessionNumber: string read GetAccessionNumber;
+    property NamespaceId: string read GetNamespaceId;
+    property SpecimenLabel: string read GetSpecimenLabel;
+    property SurgicalProcedure: string read GetSurgicalProcedure;
+    property PriorityId: string read GetPriorityId;
   end;
 
   //
@@ -287,17 +303,43 @@ type
     property ObservationMethod: string read GetObservationMethod;
   end;
 
+  TOBXSpec = class(TOBX)
+  private
+    function GetIdentifier: string;
+    function GetTextST: string;
+  public
+    property Identifier: string read GetIdentifier;
+    property TextST: string read GetTextST;
+  end;
+
+  TOBXList = class(TList)
+  private
+    function GetTextSTByTypeAndId(AValueType, AIdentifier: string): string;
+    function GetMicroscopicDesc: string;
+    function GetDiagnosis: string;
+    function GetComment: string;
+    function GetGrossDescription: string;
+  public
+    property MicroscopicDesc: string read GetMicroscopicDesc;
+    property Diagnosis: string read GetDiagnosis;
+    property Comment: string read GetComment;
+    property GrossDescription: string read GetGrossDescription;
+  end;
+
   THL7Message = class
   private
     FMSH: TMSH;
     FOBR: TOBR;
     FPID: TPID;
-    FOBX: TOBX;
+//    FOBX: TOBX;
+    FOBXList: TOBXList;
     class function LoadMSHById(ASQLQuery: TSQLQuery; AId: Integer): string;
     class function LoadPIDById(var ASQLQuery: TSQLQuery; AId: Integer): string;
     class function LoadOBRById(ASQLQuery: TSQLQuery; AId: Integer): string;
     class function LoadOBXById(ASQLQuery: TSQLQuery; AId: Integer): string;
+    procedure SaveAccession(ASQLQuery: TSQLQuery);
     procedure SavePatient(ASQLQuery: TSQLQuery);
+    procedure SaveSpecimen(ASQLQuery: TSQLQuery);
   public
     constructor Create(AMsg: TStrings); overload;
     constructor Create(AMsg: string); overload;
@@ -308,7 +350,8 @@ type
     property MSH: TMSH read FMSH;
     property PID: TPID read FPID;
     property OBR: TOBR read FOBR;
-    property OBX: TOBX read FOBX;
+//    property OBX: TOBX read FOBX;
+    property OBXList: TOBXList read FOBXList;
   end;
 
 implementation
@@ -594,14 +637,19 @@ end;
 { THL7Message }
 
 constructor THL7Message.Create(AMsg: TStrings);
+var
+  I: Integer;
 begin
-  if AMsg.Count > 3 then
+  if AMsg.Count > 2 then
   begin
     FMSH := TMSH.Create(AMsg[0]);
     FPID := TPID.Create(AMsg[1]);
     FOBR := TOBR.Create(AMsg[2]);
-    FOBX := TOBX.Create(AMsg[3]);
+//    FOBX := TOBX.Create(AMsg[3]);
   end;
+  FOBXList := TOBXList.Create;
+  for I := 3 to AMsg.Count - 1 do
+    FOBXList.Add(TOBX.Create(AMsg[I]))
 end;
 
 constructor THL7Message.Create(AMsg: string);
@@ -625,8 +673,10 @@ begin
     FPID.Free;
   if Assigned(FOBR) then
     FOBR.Free;
-  if Assigned(FOBX) then
-    FOBX.Free;
+//  if Assigned(FOBX) then
+//    FOBX.Free;
+  if Assigned(FOBXList) then
+    FOBXList.Free;
   inherited;
 end;
 
@@ -668,49 +718,108 @@ begin
   try
     ASQLQuery.Open;
     if not ASQLQuery.Eof then
+    with ASQLQuery do
     begin
-      Result := Result + HL7_SEPARATOR +
-      IntToStr(ASQLQuery.FieldByName('patient_id').AsInteger) + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      ASQLQuery.FieldByName('medical_record').AsString + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      ASQLQuery.FieldByName('last_name').AsString + HL7_SEPARATOR_COMPONENT +
-      ASQLQuery.FieldByName('first_name').AsString + HL7_SEPARATOR_COMPONENT +
-      '' +
-      DateToMedDateStr(SQLiteDateStrToDate(ASQLQuery.FieldByName('date_of_birth').AsString)) + HL7_SEPARATOR_COMPONENT +
-      '' +
-      ASQLQuery.FieldByName('gender').AsString + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      ASQLQuery.FieldByName('address').AsString + HL7_SEPARATOR_COMPONENT +
-      '' + HL7_SEPARATOR_COMPONENT +
-      ASQLQuery.FieldByName('city').AsString + HL7_SEPARATOR_COMPONENT +
-      ASQLQuery.FieldByName('state_province').AsString + HL7_SEPARATOR_COMPONENT +
-      ASQLQuery.FieldByName('zip_postal_code').AsString + HL7_SEPARATOR_COMPONENT +
-      '' + HL7_SEPARATOR_COMPONENT +
-      '' + HL7_SEPARATOR +
-      ASQLQuery.FieldByName('country_region').AsString + HL7_SEPARATOR +
-      ASQLQuery.FieldByName('home_phone').AsString + HL7_SEPARATOR_COMPONENT +
-      ASQLQuery.FieldByName('business_phone').AsString + HL7_SEPARATOR_COMPONENT +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR +
-      '' + HL7_SEPARATOR;
+      //PatientID
+      Result := Result + HL7_SEPARATOR + IntToStr(FieldByName('patient_id').AsInteger);
+      //PatientIDExt
+      Result := Result + HL7_SEPARATOR + '';
+      //PatientIDInt
+      Result := Result + HL7_SEPARATOR + FieldByName('medical_record').AsString;
+      //PatientIDAlt
+      Result := Result + HL7_SEPARATOR + '';
+      //PatientName
+      Result := Result + HL7_SEPARATOR + FieldByName('last_name').AsString;
+      Result := Result + HL7_SEPARATOR_COMPONENT + FieldByName('first_name').AsString;
+      //MothMaidenName
+      Result := Result + HL7_SEPARATOR + '';
+      //DateBirth
+      Result := Result + HL7_SEPARATOR + DateToMedDateStr(SQLiteDateStrToDate(FieldByName('date_of_birth').AsString));
+      //Gender
+      Result := Result + HL7_SEPARATOR + FieldByName('gender').AsString;
+      //PatientAlias
+      Result := Result + HL7_SEPARATOR + '';
+      //Race
+      Result := Result + HL7_SEPARATOR + '';
+      //Address
+      Result := Result + HL7_SEPARATOR + FieldByName('address').AsString;
+      Result := Result + HL7_SEPARATOR_COMPONENT + '';
+      Result := Result + HL7_SEPARATOR_COMPONENT + FieldByName('city').AsString;
+      Result := Result + HL7_SEPARATOR_COMPONENT + FieldByName('state_province').AsString;
+      Result := Result + HL7_SEPARATOR_COMPONENT + FieldByName('zip_postal_code').AsString;
+      Result := Result + HL7_SEPARATOR_COMPONENT + '';
+      //CountyCode
+      Result := Result + HL7_SEPARATOR + FieldByName('country_region').AsString;
+      //PhoneNumbHome
+      Result := Result + HL7_SEPARATOR + FieldByName('home_phone').AsString;
+      //PhoneNumbBusiness
+      Result := Result + HL7_SEPARATOR + FieldByName('business_phone').AsString;
+      //PrimaryLanguage
+      Result := Result + HL7_SEPARATOR + '';
+      //MaritalStatus
+      Result := Result + HL7_SEPARATOR + '';
+      //Religion
+      Result := Result + HL7_SEPARATOR + '';
+      //PatientAccountNumber
+      Result := Result + HL7_SEPARATOR + '';
+      //SSNNumb
+      Result := Result + HL7_SEPARATOR + '';
+      //DriverLicNumb
+      Result := Result + HL7_SEPARATOR + '';
+      //MothersIdentifie
+      Result := Result + HL7_SEPARATOR + '';
+      //EthnicGroup
+      Result := Result + HL7_SEPARATOR + '';
+      //BirthPlace
+      Result := Result + HL7_SEPARATOR + '';
+      //MultipleBirthIndicator
+      Result := Result + HL7_SEPARATOR + '';
+      //BirthOrder
+      Result := Result + HL7_SEPARATOR + '';
+      //Citizenship
+      Result := Result + HL7_SEPARATOR + '';
+      //VeteransMilitaryStatus
+      Result := Result + HL7_SEPARATOR + '';
+      //Nationality
+      Result := Result + HL7_SEPARATOR + '';
+      //PatientDeathDateTime
+      Result := Result + HL7_SEPARATOR + '';
+      //PatientDeathIndicator
+      Result := Result + HL7_SEPARATOR + '';
+      //End segment
+      Result := Result + HL7_SEPARATOR;
     end;
   except
 
+  end;
+end;
+
+procedure THL7Message.SaveAccession(ASQLQuery: TSQLQuery);
+var
+  Accession: TAccessionSpec;
+  SqlStr: string;
+begin
+  Accession := TAccessionSpec(OBR);
+  with ASQLQuery do
+  begin
+    SqlStr := 'INSERT OR REPLACE INTO accession ' +
+              '(accession_number, ' +
+              ' clinical_information, ' +
+              ' specimen_count, ' +
+              ' patient_id, ' +
+              ' date_obtained) ' +
+              'VALUES (:accession_number, ' +
+                      ':clinical_information, ' +
+                      ':specimen_count, ' +
+                      ':patient_id, ' +
+                      ':date_obtained)';
+    SQL.Text := SqlStr;
+    ParamByName('accession_number').AsString := Accession.AccessionNumber;
+    ParamByName('clinical_information').AsString := Accession.RelevantClinicalInfo;
+    ParamByName('specimen_count').AsInteger := Accession.NumberOfSampleContainers;
+    ParamByName('patient_id').AsInteger := PID.PatientID;
+    ParamByName('date_obtained').AsString := DateToSQLiteDateStr(Accession.ObservationDateTime);
+    ExecSQL;
   end;
 end;
 
@@ -721,6 +830,7 @@ var
 begin
   Patient := TPatient(PID);
   if Patient.PatientID > 0 then
+  with ASQLQuery do
   begin
     SqlStr := 'INSERT OR REPLACE INTO patient ' +
               '(patient_id, ' +
@@ -753,41 +863,83 @@ begin
                       ':gender, ' +
                       ':marital_status, ' +
                       ':full_name)';
-    ASQLQuery.SQL.Text := SqlStr;
-    ASQLQuery.ParamByName('patient_id').AsInteger := Patient.PatientID;
-    ASQLQuery.ParamByName('last_name').AsString := Patient.Surname;
-    ASQLQuery.ParamByName('medical_record').AsString := Patient.PatientIDInt;
-    ASQLQuery.ParamByName('first_name').AsString := Patient.Firstname;
-    ASQLQuery.ParamByName('date_of_birth').AsString := DateToSQLiteDateStr(Patient.DTBirth);
-    ASQLQuery.ParamByName('business_phone').AsString := Patient.PhoneNumbBusiness;
-    ASQLQuery.ParamByName('home_phone').AsString := Patient.PhoneNumbHome;
-    ASQLQuery.ParamByName('address').AsString := Patient.Address1 + ' ' + Patient.Address2;
-    ASQLQuery.ParamByName('city').AsString := Patient.City;
-    ASQLQuery.ParamByName('state_province').AsString := Patient.ProvinceCode;
-    ASQLQuery.ParamByName('zip_postal_code').AsString := Patient.PostalCode;
-    ASQLQuery.ParamByName('country_region').AsString := Patient.CountyCode;
-    ASQLQuery.ParamByName('gender').AsString := Patient.Gender;
-    ASQLQuery.ParamByName('marital_status').AsString := Patient.MaritalStatus;
-    ASQLQuery.ParamByName('full_name').AsString := Patient.FullName;
-    ASQLQuery.ExecSQL;
+    SQL.Text := SqlStr;
+    ParamByName('patient_id').AsInteger := Patient.PatientID;
+    ParamByName('last_name').AsString := Patient.Surname;
+    ParamByName('medical_record').AsString := Patient.PatientIDInt;
+    ParamByName('first_name').AsString := Patient.Firstname;
+    ParamByName('date_of_birth').AsString := DateToSQLiteDateStr(Patient.DTBirth);
+    ParamByName('business_phone').AsString := Patient.PhoneNumbBusiness;
+    ParamByName('home_phone').AsString := Patient.PhoneNumbHome;
+    ParamByName('address').AsString := Patient.Address1;
+    ParamByName('city').AsString := Patient.City;
+    ParamByName('state_province').AsString := Patient.ProvinceCode;
+    ParamByName('zip_postal_code').AsString := Patient.PostalCode;
+    ParamByName('country_region').AsString := Patient.CountyCode;
+    ParamByName('gender').AsString := Patient.Gender;
+    ParamByName('marital_status').AsString := Patient.MaritalStatus;
+    ParamByName('full_name').AsString := Patient.FullName;
+    ExecSQL;
+  end;
+end;
+
+procedure THL7Message.SaveSpecimen(ASQLQuery: TSQLQuery);
+var
+  Spec: TAccessionSpec;
+  SqlStr: string;
+begin
+  Spec := TAccessionSpec(OBR);
+  with ASQLQuery do
+  begin
+    SqlStr := 'INSERT OR REPLACE INTO specimen ' +
+              '(accession_number, ' +
+              ' specimen_label, ' +
+              ' microscopic_description, ' +
+              ' diagnosis, ' +
+              ' comment, ' +
+              ' priority_id, ' +
+              ' gross_description, ' +
+              ' surgical_procedure) ' +
+              'VALUES (:accession_number, ' +
+                      ':specimen_label, ' +
+                      ':microscopic_description, ' +
+                      ':diagnosis, ' +
+                      ':comment, ' +
+                      ':priority_id, ' +
+                      ':gross_description, ' +
+                      ':surgical_procedure)';
+    SQL.Text := SqlStr;
+    ParamByName('accession_number').AsString := Spec.AccessionNumber;
+    ParamByName('specimen_label').AsString := Spec.SpecimenLabel;
+    ParamByName('microscopic_description').AsString := OBXList.MicroscopicDesc;
+    ParamByName('comment').AsString := OBXList.Comment;
+    ParamByName('priority_id').AsString := Spec.PriorityId;
+    ParamByName('gross_description').AsString := OBXList.GrossDescription;
+    ParamByName('surgical_procedure').AsString := Spec.SurgicalProcedure;
+    ExecSQL;
   end;
 end;
 
 procedure THL7Message.SaveToDB(ASQLQuery: TSQLQuery);
 begin
   SavePatient(ASQLQuery);
+  SaveAccession(ASQLQuery);
+  SaveSpecimen(ASQLQuery);
 end;
 
 function THL7Message.ToString: string;
 var
   StringList: TStrings;
+  I: Integer;
 begin
   StringList := TStringList.Create;
   try
     StringList.Add(MSH.ToString);
     StringList.Add(PID.ToString);
     StringList.Add(OBR.ToString);
-    StringList.Add(OBX.ToString);
+//    StringList.Add(OBX.ToString);
+    for I := 0 to OBXList.Count - 1 do
+      StringList.Add(TOBX(OBXList[I]).ToString);
     Result := StringList.Text;
   finally
     StringList.Free;
@@ -967,19 +1119,19 @@ begin
   Result := GetValue(Integer(obreFillerOrderNumber));
 end;
 
-function TOBR.GetNumberOfSampleContainers: string;
+function TOBR.GetNumberOfSampleContainers: Integer;
 begin
-  Result := GetValue(Integer(obreNumberOfSampleContainers));
+  Result := StrToIntDef(GetValue(Integer(obreNumberOfSampleContainers)), 0);
 end;
 
-function TOBR.GetObservationDateTime: string;
+function TOBR.GetObservationDateTime: TDateTime;
 begin
-  Result := GetValue(Integer(obreObservationDateTime));
+  Result := MedDateStrToDate(GetValue(Integer(obreObservationDateTime)));
 end;
 
-function TOBR.GetObservationEndDateTime: string;
+function TOBR.GetObservationEndDateTime: TDateTime;
 begin
-  Result := GetValue(Integer(obreObservationEndDateTime));
+  Result := MedDateStrToDate(GetValue(Integer(obreObservationEndDateTime)));
 end;
 
 function TOBR.GetOrderCallbackPhoneNumber: string;
@@ -1131,8 +1283,8 @@ begin
             UniversalServiceID + HL7_SEPARATOR +
             Priority + HL7_SEPARATOR +
             RequestedDateTime + HL7_SEPARATOR +
-            ObservationDateTime + HL7_SEPARATOR +
-            ObservationEndDateTime + HL7_SEPARATOR +
+            DateToMedDateStr(ObservationDateTime) + HL7_SEPARATOR +
+            DateToMedDateStr(ObservationEndDateTime) + HL7_SEPARATOR +
             CollectionVolume + HL7_SEPARATOR +
             CollectorIdentifier + HL7_SEPARATOR +
             SpecimenActionCode + HL7_SEPARATOR +
@@ -1161,7 +1313,7 @@ begin
             Technician + HL7_SEPARATOR +
             Transcriptionist + HL7_SEPARATOR +
             ScheduledDateTime + HL7_SEPARATOR +
-            NumberOfSampleContainers + HL7_SEPARATOR +
+            IntToStr(NumberOfSampleContainers) + HL7_SEPARATOR +
             TransportLogisticsOfCollectedSample + HL7_SEPARATOR +
             CollectorsComment + HL7_SEPARATOR +
             TransportArrangementResponsibility + HL7_SEPARATOR +
@@ -1273,6 +1425,85 @@ begin
             ProducersID + HL7_SEPARATOR +
             ResponsibleObserver + HL7_SEPARATOR +
             ObservationMethod + HL7_SEPARATOR;
+end;
+
+{ TAccession }
+
+function TAccessionSpec.GetAccessionNumber: string;
+begin
+  Result := GetSubElement(FillerOrderNumber, HL7_SEPARATOR_COMPONENT, Integer(afnEntityId));
+end;
+
+function TAccessionSpec.GetNamespaceId: string;
+begin
+  Result := GetSubElement(FillerOrderNumber, HL7_SEPARATOR_COMPONENT, Integer(afnNamespaceId));
+end;
+
+function TAccessionSpec.GetPriorityId: string;
+begin
+  Result := GetSubElement(Priority, HL7_SEPARATOR_COMPONENT, 0);
+end;
+
+function TAccessionSpec.GetSpecimenLabel: string;
+begin
+  Result := GetSubElement(SpecimenSource, HL7_SEPARATOR_COMPONENT, Integer(sssAdditives));
+end;
+
+function TAccessionSpec.GetSurgicalProcedure: string;
+begin
+  Result := GetSubElement(SpecimenSource, HL7_SEPARATOR_COMPONENT, Integer(sssFreeText));
+end;
+
+{ TOBXList }
+
+function TOBXList.GetComment: string;
+begin
+  Result := GetTextSTByTypeAndId('TX', '&TCM');
+end;
+
+function TOBXList.GetDiagnosis: string;
+begin
+  Result := GetTextSTByTypeAndId('TX', '&IMP');
+end;
+
+function TOBXList.GetGrossDescription: string;
+begin
+  Result := GetTextSTByTypeAndId('TX', '&GDT');
+end;
+
+function TOBXList.GetMicroscopicDesc: string;
+begin
+  Result := GetTextSTByTypeAndId('TX', '&MDT');
+end;
+
+function TOBXList.GetTextSTByTypeAndId(AValueType, AIdentifier: string): string;
+var
+  I: Integer;
+  OBX: TOBXSpec;
+begin
+  for I := 0 to Count - 1 do
+  begin
+    OBX := TOBXSpec(Items[I]);
+    if Assigned(OBX) then
+      if OBX.ValueType = AValueType then
+        if OBX.Identifier = AIdentifier then
+        begin
+          Result := OBX.TextST;
+          Break;
+        end;
+  end;
+end;
+
+{ TOBXSpec }
+
+function TOBXSpec.GetIdentifier: string;
+begin
+  Result := GetSubElement(ObservationIdentifier, HL7_SEPARATOR_COMPONENT, Integer(ssoIdentifierST));
+end;
+
+function TOBXSpec.GetTextST: string;
+begin
+  Result := GetSubElement(ObservationIdentifier, HL7_SEPARATOR_COMPONENT, Integer(ssoTextST));
 end;
 
 end.
