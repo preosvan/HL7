@@ -331,7 +331,6 @@ type
     FMSH: TMSH;
     FOBR: TOBR;
     FPID: TPID;
-//    FOBX: TOBX;
     FOBXList: TOBXList;
     class function LoadMSHById(ASQLQuery: TSQLQuery; AId: Integer): string;
     class function LoadPIDById(var ASQLQuery: TSQLQuery; AId: Integer): string;
@@ -344,13 +343,13 @@ type
     constructor Create(AMsg: TStrings); overload;
     constructor Create(AMsg: string); overload;
     destructor Destroy; override;
+    function CheckMessage: Boolean;
     function ToString: string; override;
     class function LoadById(var ASQLQuery: TSQLQuery; AId: Integer): THL7Message;
     procedure SaveToDB(ASQLQuery: TSQLQuery);
     property MSH: TMSH read FMSH;
     property PID: TPID read FPID;
     property OBR: TOBR read FOBR;
-//    property OBX: TOBX read FOBX;
     property OBXList: TOBXList read FOBXList;
   end;
 
@@ -645,11 +644,17 @@ begin
     FMSH := TMSH.Create(AMsg[0]);
     FPID := TPID.Create(AMsg[1]);
     FOBR := TOBR.Create(AMsg[2]);
-//    FOBX := TOBX.Create(AMsg[3]);
+    FOBXList := TOBXList.Create;
+    for I := 3 to AMsg.Count - 1 do
+      FOBXList.Add(TOBX.Create(AMsg[I]))
   end;
-  FOBXList := TOBXList.Create;
-  for I := 3 to AMsg.Count - 1 do
-    FOBXList.Add(TOBX.Create(AMsg[I]))
+end;
+
+function THL7Message.CheckMessage: Boolean;
+begin
+  Result := (PID.PatientID > 0) and
+            (PID.PatientIDInt <> EmptyStr) and
+            (OBR.FillerOrderNumber <> EmptyStr);
 end;
 
 constructor THL7Message.Create(AMsg: string);
@@ -673,8 +678,6 @@ begin
     FPID.Free;
   if Assigned(FOBR) then
     FOBR.Free;
-//  if Assigned(FOBX) then
-//    FOBX.Free;
   if Assigned(FOBXList) then
     FOBXList.Free;
   inherited;
@@ -698,12 +701,134 @@ end;
 
 class function THL7Message.LoadMSHById(ASQLQuery: TSQLQuery; AId: Integer): string;
 begin
+  //SegnentName
   Result := 'MSH';
+  //EncodingCharacters
+  Result := Result + HL7_SEPARATOR + '^~\&';
+  //SendingApp
+  Result := Result + HL7_SEPARATOR + '';
+  //SendingFacility
+  Result := Result + HL7_SEPARATOR + '';
+  //ReceivingApp
+  Result := Result + HL7_SEPARATOR + '';
+  //ReceivingFacility
+  Result := Result + HL7_SEPARATOR + '';
+  //DateTimeMsg
+  Result := Result + HL7_SEPARATOR + '';
+  //Security
+  Result := Result + HL7_SEPARATOR + '';
+  //MessageType
+  Result := Result + HL7_SEPARATOR + '';
+  //MessageControlID
+  Result := Result + HL7_SEPARATOR + '';
+  //ProcessingID
+  Result := Result + HL7_SEPARATOR + '';
+  //VersionID
+  Result := Result + HL7_SEPARATOR + '';
+  //SequenceNumber
+  Result := Result + HL7_SEPARATOR + '';
+  //ContinuationPointer
+  Result := Result + HL7_SEPARATOR + '';
+  //AcceptAcknowledgmentType
+  Result := Result + HL7_SEPARATOR + '';
+  //ApplicationAcknowledgmentType
+  Result := Result + HL7_SEPARATOR + '';
+  //CountryCode
+  Result := Result + HL7_SEPARATOR + '';
+  //CharacterSet
+  Result := Result + HL7_SEPARATOR + '';
+  //PrincipalLangMsg
+  Result := Result + HL7_SEPARATOR + '';
 end;
 
 class function THL7Message.LoadOBRById(ASQLQuery: TSQLQuery; AId: Integer): string;
 begin
+  //SegnentName
   Result := 'OBR';
+  //PlacerOrderNumber
+  Result := Result + HL7_SEPARATOR + '';
+  //FillerOrderNumber
+  Result := Result + HL7_SEPARATOR + '';
+  //UniversalServiceID
+  Result := Result + HL7_SEPARATOR + '';
+  //Priority
+  Result := Result + HL7_SEPARATOR + '';
+  //RequestedDateTime
+  Result := Result + HL7_SEPARATOR + '';
+  //ObservationDateTime
+  Result := Result + HL7_SEPARATOR + '';
+  //ObservationEndDateTime
+  Result := Result + HL7_SEPARATOR + '';
+  //CollectionVolume
+  Result := Result + HL7_SEPARATOR + '';
+  //CollectorIdentifier
+  Result := Result + HL7_SEPARATOR + '';
+  //SpecimenActionCode
+  Result := Result + HL7_SEPARATOR + '';
+  //DangerCode
+  Result := Result + HL7_SEPARATOR + '';
+  //RelevantClinicalInfo
+  Result := Result + HL7_SEPARATOR + '';
+  //SpecimenReceivedDateTime
+  Result := Result + HL7_SEPARATOR + '';
+  //SpecimenSource
+  Result := Result + HL7_SEPARATOR + '';
+  //OrderingProvider
+  Result := Result + HL7_SEPARATOR + '';
+  //OrderCallbackPhoneNumber
+  Result := Result + HL7_SEPARATOR + '';
+  //PlacerField1
+  Result := Result + HL7_SEPARATOR + '';
+  //PlacerField2
+  Result := Result + HL7_SEPARATOR + '';
+  //FillerField1
+  Result := Result + HL7_SEPARATOR + '';
+  //FillerField2
+  Result := Result + HL7_SEPARATOR + '';
+  //ResultsRptStatusChngDateTime
+  Result := Result + HL7_SEPARATOR + '';
+  //ChargeToPractice
+  Result := Result + HL7_SEPARATOR + '';
+  //DiagnosticServSectID
+  Result := Result + HL7_SEPARATOR + '';
+  //ResultStatus
+  Result := Result + HL7_SEPARATOR + '';
+  //ParentResult
+  Result := Result + HL7_SEPARATOR + '';
+  //QuantityOrTiming
+  Result := Result + HL7_SEPARATOR + '';
+  //ResultCopiesTo
+  Result := Result + HL7_SEPARATOR + '';
+  //Parent
+  Result := Result + HL7_SEPARATOR + '';
+  //TransportationMode
+  Result := Result + HL7_SEPARATOR + '';
+  //ReasonForStudy
+  Result := Result + HL7_SEPARATOR + '';
+  //PrincipalResultInterpreter
+  Result := Result + HL7_SEPARATOR + '';
+  //AssistantResultInterpreter
+  Result := Result + HL7_SEPARATOR + '';
+  //Technician
+  Result := Result + HL7_SEPARATOR + '';
+  //Transcriptionist
+  Result := Result + HL7_SEPARATOR + '';
+  //ScheduledDateTime
+  Result := Result + HL7_SEPARATOR + '';
+  //NumberOfSampleContainers
+  Result := Result + HL7_SEPARATOR + '';
+  //TransportLogisticsOfCollectedSample
+  Result := Result + HL7_SEPARATOR + '';
+  //CollectorsComment
+  Result := Result + HL7_SEPARATOR + '';
+  //TransportArrangementResponsibility
+  Result := Result + HL7_SEPARATOR + '';
+  //TransportArranged
+  Result := Result + HL7_SEPARATOR + '';
+  //EscortRequired
+  Result := Result + HL7_SEPARATOR + '';
+  //PlannedPatientTransportComment
+  Result := Result + HL7_SEPARATOR + '';
 end;
 
 class function THL7Message.LoadOBXById(ASQLQuery: TSQLQuery; AId: Integer): string;
@@ -922,9 +1047,12 @@ end;
 
 procedure THL7Message.SaveToDB(ASQLQuery: TSQLQuery);
 begin
-  SavePatient(ASQLQuery);
-  SaveAccession(ASQLQuery);
-  SaveSpecimen(ASQLQuery);
+  if CheckMessage then
+  begin
+    SavePatient(ASQLQuery);
+    SaveAccession(ASQLQuery);
+    SaveSpecimen(ASQLQuery);
+  end;
 end;
 
 function THL7Message.ToString: string;

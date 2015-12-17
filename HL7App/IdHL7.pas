@@ -1407,36 +1407,36 @@ begin
   FLock.Enter;
   try
     if not Going then
-      begin
+    begin
       raise EHL7CommunicationError.Create(Name, Format(RSHL7NotWorking, [RSHL7SendMessage]))
-      end
+    end
     else if GetStatus <> isConnected then
-      begin
+    begin
       Result := srNoConnection
-      end
+    end
     else
-      begin
+    begin
       if FIsServer then
-        begin
+      begin
         if Assigned(FServerConn) then
-          begin
+        begin
           FServerConn.IOHandler.Write(MSG_START + AMsg + MSG_END);
           Result := srSent
-          end
-        else
-          begin
-          raise EHL7CommunicationError.Create(Name, RSHL7NoConnectionFound);
-          end
         end
       else
         begin
+          raise EHL7CommunicationError.Create(Name, RSHL7NoConnectionFound);
+        end
+      end
+      else
+      begin
         FClient.IOHandler.Write(MSG_START + AMsg + MSG_END);
         Result := srSent
-        end;
       end;
+    end;
   finally
     FLock.Leave;
-    end
+  end;
 end;
 
 function TIdHL7.SynchronousSend(AMsg: String; var VReply: String): TSendResponse;
@@ -1453,34 +1453,32 @@ begin
     FMsgReply := '';
   finally
     FLock.Leave;
-    end;
+  end;
   try
     Result := AsynchronousSend(AMsg);
     if Result = srSent then
-      begin
+    begin
       assert(Assigned(FWaitEvent));
       FWaitEvent.WaitFor(FTimeOut);
-      end;
+    end;
   finally
     FLock.Enter;
     try
       FWaitingForAnswer := False;
       if Result = srSent then
-        begin
         Result := FReplyResponse;
-        end;
       if Result = srTimeout then
-        begin
+      begin
         if FIsServer then
           DropServerConnection
         else
           DropClientConnection;
-        end;
+      end;
       VReply := FMsgReply;
     finally
       FLock.Leave;
-      end;
     end;
+  end;
 end;
 
 procedure TIdHL7.SendMessage(AMsg: String);
@@ -1499,7 +1497,7 @@ begin
     FReplyResponse := AsynchronousSend(AMsg);
   finally
     FLock.Leave;
-    end;
+  end;
 end;
 
 function TIdHL7.GetReply(var VReply: String): TSendResponse;
@@ -1509,33 +1507,31 @@ begin
   FLock.Enter;
   try
     if FWaitingForAnswer then
-      begin
+    begin
       if FWaitStop < now then
-        begin
+      begin
         Result := srTimeout;
         VReply := '';
         FWaitingForAnswer := False;
         FReplyResponse := srError;
-        end
-      else
-        begin
-        Result := srNone;
-        end;
       end
-    else
+      else
       begin
+        Result := srNone;
+      end;
+    end
+    else
+    begin
       Result := FReplyResponse;
       if Result = srSent then
-        begin
         Result := srTimeOut;
-        end;
       VReply := FMsgReply;
       FWaitingForAnswer := False;
       FReplyResponse := srError;
-      end;
+    end;
   finally
     FLock.Leave;
-    end;
+  end;
 end;
 
 function TIdHL7.GetMessage(var VMsg: String): TObject;
@@ -1546,16 +1542,16 @@ begin
   FLock.Enter;
   try
     if FMsgQueue.Count = 0 then
-      begin
+    begin
       Result := NIL;
-      end
+    end
     else
       begin
-      Result := FMsgQueue[0];
-      TQueuedMessage(Result)._AddRef;
-      VMsg := TQueuedMessage(Result).FMsg;
-      FMsgQueue.Delete(0);
-      FHndMsgQueue.Add(Result);
+        Result := FMsgQueue[0];
+        TQueuedMessage(Result)._AddRef;
+        VMsg := TQueuedMessage(Result).FMsg;
+        FMsgQueue.Delete(0);
+        FHndMsgQueue.Add(Result);
       end;
   finally
     FLock.Leave;
@@ -1578,7 +1574,7 @@ begin
     FHndMsgQueue.Delete(FHndMsgQueue.IndexOf(AMsgHnd));
   finally
     FLock.Leave;
-    end;
+  end;
   qm.FEvent.SetEvent;
 end;
 
