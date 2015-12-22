@@ -41,6 +41,12 @@ type
     function GetSendingFacility: string;
     function GetSequenceNumber: string;
     function GetVersionID: string;
+    function GetAltCharacterSetHandlingScheme: string;
+    function GetMsgProfileId: string;
+    function GetReceivNetworkAddress: string;
+    function GetReceivResponsibleOrg: string;
+    function GetSendNetworkAddress: string;
+    function GetSendResponsibleOrg: string;
   public
     function ToString: string; override;
     property EncodingCharacters: string read GetEncodingCharacters;
@@ -61,6 +67,12 @@ type
     property CountryCode: string read GetCountryCode;
     property CharacterSet: string read GetCharacterSet;
     property PrincipalLangMsg: string read GetPrincipalLangMsg;
+    property AltCharacterSetHandlingScheme: string read GetAltCharacterSetHandlingScheme;
+    property MsgProfileId: string read GetMsgProfileId;
+    property SendResponsibleOrg: string read GetSendResponsibleOrg;
+    property ReceivResponsibleOrg: string read GetReceivResponsibleOrg;
+    property SendNetworkAddress: string read GetSendNetworkAddress;
+    property ReceivNetworkAddress: string read GetReceivNetworkAddress;
   end;
 
   //Patient Identification
@@ -96,6 +108,15 @@ type
     function GetPatientDeathDateTime: string;
     function GetPatientDeathIndicator: string;
     function GetVeteransMilitaryStatus: string;
+    function GetBreedCode: string;
+    function GetIdentityReliabilityCode: string;
+    function GetIdentityUnknownIndicator: string;
+    function GetLastUpdateDateTime: string;
+    function GetLastUpdateFacility: string;
+    function GetProductionClassCode: string;
+    function GetSpeciesCode: string;
+    function GetStrain: string;
+    function GetTribalCitizenshi: string;
   public
     function ToString: string; override;
     property PatientID: Integer read GetPatientID;
@@ -128,6 +149,15 @@ type
     property Nationality: string read GetNationality;
     property PatientDeathDateTime: string read GetPatientDeathDateTime;
     property PatientDeathIndicator: string read GetPatientDeathIndicator;
+    property IdentityUnknownIndicator: string read GetIdentityUnknownIndicator;
+    property IdentityReliabilityCode: string read GetIdentityReliabilityCode;
+    property LastUpdateDateTime: string read GetLastUpdateDateTime;
+    property LastUpdateFacility: string read GetLastUpdateFacility;
+    property SpeciesCode: string read GetSpeciesCode;
+    property BreedCode: string read GetBreedCode;
+    property Strain: string read GetStrain;
+    property ProductionClassCode: string read GetProductionClassCode;
+    property TribalCitizenshi: string read GetTribalCitizenshi;
   end;
 
   TPatient = class(TPID)
@@ -307,9 +337,44 @@ type
   private
     function GetIdentifier: string;
     function GetTextST: string;
+    function GetComment: string;
+    function GetDiagnosis: string;
+    function GetGrossDescription: string;
+    function GetMicroscopicDesc: string;
+    function GetSpecimenLabel: string;
   public
     property Identifier: string read GetIdentifier;
     property TextST: string read GetTextST;
+    property MicroscopicDesc: string read GetMicroscopicDesc;
+    property Diagnosis: string read GetDiagnosis;
+    property Comment: string read GetComment;
+    property GrossDescription: string read GetGrossDescription;
+    property SpecimenLabel: string read GetSpecimenLabel;
+  end;
+
+  TSpeciman = class
+  private
+    FComment: string;
+    FGrossDescription: string;
+    FMicroscopicDesc: string;
+    FDiagnosis: string;
+    FId: string;
+    FSpecimenLabel: string;
+  public
+    constructor Create(AId: string);
+    property Id: string read FId write FId;
+    property MicroscopicDesc: string read FMicroscopicDesc write FMicroscopicDesc;
+    property Diagnosis: string read FDiagnosis write FDiagnosis;
+    property Comment: string read FComment write FComment;
+    property GrossDescription: string read FGrossDescription write FGrossDescription;
+    property SpecimenLabel: string read FSpecimenLabel write FSpecimenLabel;
+  end;
+
+  TSpecimanList = class(TList)
+  public
+    function AddSpeciman(AId: string): TSpeciman;
+    function IsExist(AId: string): Boolean;
+    function GetSpecimanById(AId: string): TSpeciman;
   end;
 
   TOBXList = class(TList)
@@ -332,6 +397,8 @@ type
     FOBR: TOBR;
     FPID: TPID;
     FOBXList: TOBXList;
+    FSpecimanList: TSpecimanList;
+    procedure InitSpecimanList;
     class function LoadMSHById(ASQLQuery: TSQLQuery; AId: Integer): string;
     class function LoadPIDById(var ASQLQuery: TSQLQuery; AId: Integer): string;
     class function LoadOBRById(ASQLQuery: TSQLQuery; AId: Integer): string;
@@ -351,6 +418,7 @@ type
     property PID: TPID read FPID;
     property OBR: TOBR read FOBR;
     property OBXList: TOBXList read FOBXList;
+    property SpecimanList: TSpecimanList read FSpecimanList;
   end;
 
 implementation
@@ -375,6 +443,11 @@ end;
 function TPID.GetBirthPlace: string;
 begin
   Result := GetValue(Integer(pideBirthPlace));
+end;
+
+function TPID.GetBreedCode: string;
+begin
+  Result := GetValue(Integer(pideBreedCode));
 end;
 
 function TPID.GetCitizenship: string;
@@ -405,6 +478,26 @@ end;
 function TPID.GetGender: string;
 begin
   Result := GetValue(Integer(pideSex));
+end;
+
+function TPID.GetIdentityReliabilityCode: string;
+begin
+  Result := GetValue(Integer(pideIdentityReliabilityCode));
+end;
+
+function TPID.GetIdentityUnknownIndicator: string;
+begin
+  Result := GetValue(Integer(pideIdentityUnknownIndicator));
+end;
+
+function TPID.GetLastUpdateDateTime: string;
+begin
+  Result := GetValue(Integer(pideLastUpdateDateTime));
+end;
+
+function TPID.GetLastUpdateFacility: string;
+begin
+  Result := GetValue(Integer(pideLastUpdateFacility));
 end;
 
 function TPID.GetMaritalStatus: string;
@@ -492,6 +585,11 @@ begin
   Result := GetValue(Integer(pidePrimaryLanguage));
 end;
 
+function TPID.GetProductionClassCode: string;
+begin
+  Result := GetValue(Integer(pideProductionClassCode));
+end;
+
 function TPID.GetRace: string;
 begin
   Result := GetValue(Integer(pideRace));
@@ -502,9 +600,24 @@ begin
   Result := GetValue(Integer(pideReligion));
 end;
 
+function TPID.GetSpeciesCode: string;
+begin
+  Result := GetValue(Integer(pideSpeciesCode));
+end;
+
 function TPID.GetSSNNumb: string;
 begin
   Result := GetValue(Integer(pideSSNNumber));
+end;
+
+function TPID.GetStrain: string;
+begin
+  Result := GetValue(Integer(pideStrain));
+end;
+
+function TPID.GetTribalCitizenshi: string;
+begin
+  Result := GetValue(Integer(pideTribalCitizenshi));
 end;
 
 function TPID.GetVeteransMilitaryStatus: string;
@@ -545,7 +658,16 @@ begin
             VeteransMilitaryStatus + HL7_SEPARATOR +
             Nationality + HL7_SEPARATOR +
             PatientDeathDateTime + HL7_SEPARATOR +
-            PatientDeathIndicator;
+            PatientDeathIndicator + HL7_SEPARATOR +
+            IdentityUnknownIndicator + HL7_SEPARATOR +
+            IdentityReliabilityCode + HL7_SEPARATOR +
+            LastUpdateDateTime + HL7_SEPARATOR +
+            LastUpdateFacility + HL7_SEPARATOR +
+            SpeciesCode + HL7_SEPARATOR +
+            BreedCode + HL7_SEPARATOR +
+            Strain + HL7_SEPARATOR +
+            ProductionClassCode + HL7_SEPARATOR +
+            TribalCitizenshi;
 end;
 
 { TPatient }
@@ -605,6 +727,7 @@ end;
 constructor THL7Segment.Create(AMsgText: string);
 begin
   FMsgText := TStringList.Create;
+  FMsgText.StrictDelimiter := True;
   FMsgText.Delimiter := HL7_SEPARATOR;
   FMsgText.DelimitedText := AMsgText;
 end;
@@ -646,15 +769,18 @@ begin
     FOBR := TOBR.Create(AMsg[2]);
     FOBXList := TOBXList.Create;
     for I := 3 to AMsg.Count - 1 do
-      FOBXList.Add(TOBX.Create(AMsg[I]))
+      FOBXList.Add(TOBX.Create(AMsg[I]));
+
+    FSpecimanList := TSpecimanList.Create;
+    InitSpecimanList;
   end;
 end;
 
 function THL7Message.CheckMessage: Boolean;
 begin
   Result := (PID.PatientID > 0) and
-            (PID.PatientIDInt <> EmptyStr) and
-            (OBR.FillerOrderNumber <> EmptyStr);
+            (PID.PatientIDInt <> EmptyStr);// and
+//            (OBR.FillerOrderNumber <> EmptyStr);
 end;
 
 constructor THL7Message.Create(AMsg: string);
@@ -680,7 +806,74 @@ begin
     FOBR.Free;
   if Assigned(FOBXList) then
     FOBXList.Free;
+  if Assigned(FSpecimanList) then
+    FSpecimanList.Free;
   inherited;
+end;
+
+procedure THL7Message.InitSpecimanList;
+var
+  Speciman: TSpeciman;
+  OBX: TOBXSpec;
+  I: Integer;
+  J: Integer;
+begin
+  SpecimanList.Clear;
+  for I := 0 to OBXList.Count - 1 do
+  begin
+    if TOBXSpec(OBXList[I]).ObservationSubID <> EmptyStr then
+    begin
+      if not SpecimanList.IsExist(TOBXSpec(OBXList[I]).ObservationSubID) then
+        Speciman := SpecimanList.AddSpeciman(TOBXSpec(OBXList[I]).ObservationSubID)
+      else
+        Speciman := SpecimanList.GetSpecimanById(TOBXSpec(OBXList[I]).ObservationSubID);
+
+      //SpecimenLabel
+      for J := 0 to OBXList.Count - 1 do
+      begin
+        OBX := TOBXSpec(OBXList[J]);
+        if (OBX.ObservationSubID = TOBXSpec(OBXList[I]).ObservationSubID) and
+           (OBX.SpecimenLabel <> EmptyStr) then
+        begin
+          Speciman.SpecimenLabel := OBX.SpecimenLabel;
+          Break;
+        end;
+      end;
+      //GrossDescription
+      for J := 0 to OBXList.Count - 1 do
+      begin
+        OBX := TOBXSpec(OBXList[J]);
+        if (OBX.ObservationSubID = TOBXSpec(OBXList[I]).ObservationSubID) and
+           (OBX.GrossDescription <> EmptyStr) then
+        begin
+          Speciman.GrossDescription := OBX.GrossDescription;
+          Break;
+        end;
+      end;
+      //MicroscopicDesc
+      for J := 0 to OBXList.Count - 1 do
+      begin
+        OBX := TOBXSpec(OBXList[J]);
+        if (OBX.ObservationSubID = TOBXSpec(OBXList[I]).ObservationSubID) and
+           (OBX.MicroscopicDesc <> EmptyStr) then
+        begin
+          Speciman.MicroscopicDesc := OBX.MicroscopicDesc;
+          Break;
+        end;
+      end;
+      //Diagnosis
+      for J := 0 to OBXList.Count - 1 do
+      begin
+        OBX := TOBXSpec(OBXList[J]);
+        if (OBX.ObservationSubID = TOBXSpec(OBXList[I]).ObservationSubID) and
+           (OBX.Diagnosis <> EmptyStr) then
+        begin
+          Speciman.Diagnosis := OBX.Diagnosis;
+          Break;
+        end;
+      end;
+    end;
+  end;
 end;
 
 class function THL7Message.LoadById(var ASQLQuery: TSQLQuery; AId: Integer): THL7Message;
@@ -708,23 +901,23 @@ begin
   //SendingApp
   Result := Result + HL7_SEPARATOR + '';
   //SendingFacility
-  Result := Result + HL7_SEPARATOR + '';
+  Result := Result + HL7_SEPARATOR + 'INDEPENDENT LAB SERVICES^33D1234567^CLIA';
   //ReceivingApp
   Result := Result + HL7_SEPARATOR + '';
   //ReceivingFacility
   Result := Result + HL7_SEPARATOR + '';
   //DateTimeMsg
-  Result := Result + HL7_SEPARATOR + '';
+  Result := Result + HL7_SEPARATOR + DateTimeToMedDateTimeStr(Now);
   //Security
   Result := Result + HL7_SEPARATOR + '';
   //MessageType
-  Result := Result + HL7_SEPARATOR + '';
+  Result := Result + HL7_SEPARATOR + 'ORU^R01^ORU_R01';
   //MessageControlID
-  Result := Result + HL7_SEPARATOR + '';
+  Result := Result + HL7_SEPARATOR + '2004072813390045';
   //ProcessingID
-  Result := Result + HL7_SEPARATOR + '';
+  Result := Result + HL7_SEPARATOR + 'P';
   //VersionID
-  Result := Result + HL7_SEPARATOR + '';
+  Result := Result + HL7_SEPARATOR + '2.5.1';
   //SequenceNumber
   Result := Result + HL7_SEPARATOR + '';
   //ContinuationPointer
@@ -738,6 +931,18 @@ begin
   //CharacterSet
   Result := Result + HL7_SEPARATOR + '';
   //PrincipalLangMsg
+  Result := Result + HL7_SEPARATOR + '';
+  //AltCharacterSetHandlingScheme
+  Result := Result + HL7_SEPARATOR + '';
+  //MsgProfileId
+  Result := Result + HL7_SEPARATOR + 'VOL_V_30_ORU_R01^NAACCR_CP^2.16.840.1.113883.9.8^ISO';
+  //SendResponsibleOrg
+  Result := Result + HL7_SEPARATOR + '';
+  //ReceivResponsibleOrg
+  Result := Result + HL7_SEPARATOR + '';
+  //SendNetworkAddress
+  Result := Result + HL7_SEPARATOR + '';
+  //ReceivNetworkAddress
   Result := Result + HL7_SEPARATOR + '';
 end;
 
@@ -1012,8 +1217,10 @@ procedure THL7Message.SaveSpecimen(ASQLQuery: TSQLQuery);
 var
   Spec: TAccessionSpec;
   SqlStr: string;
+  I: Integer;
 begin
   Spec := TAccessionSpec(OBR);
+  for I := 0 to SpecimanList.Count - 1 do
   with ASQLQuery do
   begin
     SqlStr := 'INSERT OR REPLACE INTO specimen ' +
@@ -1024,7 +1231,7 @@ begin
               ' comment, ' +
               ' priority_id, ' +
               ' gross_description, ' +
-              ' surgical_procedure) ' +
+              ' diagnosis) ' +
               'VALUES (:accession_number, ' +
                       ':specimen_label, ' +
                       ':microscopic_description, ' +
@@ -1032,15 +1239,15 @@ begin
                       ':comment, ' +
                       ':priority_id, ' +
                       ':gross_description, ' +
-                      ':surgical_procedure)';
+                      ':diagnosis)';
     SQL.Text := SqlStr;
     ParamByName('accession_number').AsString := Spec.AccessionNumber;
-    ParamByName('specimen_label').AsString := Spec.SpecimenLabel;
-    ParamByName('microscopic_description').AsString := OBXList.MicroscopicDesc;
+    ParamByName('specimen_label').AsString := TSpeciman(SpecimanList[I]).SpecimenLabel;
+    ParamByName('microscopic_description').AsString := TSpeciman(SpecimanList[I]).MicroscopicDesc;
     ParamByName('comment').AsString := OBXList.Comment;
     ParamByName('priority_id').AsString := Spec.PriorityId;
-    ParamByName('gross_description').AsString := OBXList.GrossDescription;
-    ParamByName('surgical_procedure').AsString := Spec.SurgicalProcedure;
+    ParamByName('gross_description').AsString := TSpeciman(SpecimanList[I]).GrossDescription;
+    ParamByName('diagnosis').AsString := TSpeciman(SpecimanList[I]).Diagnosis;
     ExecSQL;
   end;
 end;
@@ -1079,6 +1286,11 @@ end;
 function TMSH.GetAcceptAcknowledgmentType: string;
 begin
   Result := GetValue(Integer(msheAcceptAcknowledgmentType));
+end;
+
+function TMSH.GetAltCharacterSetHandlingScheme: string;
+begin
+  Result := GetValue(Integer(msheAltCharacterSetHandlingScheme));
 end;
 
 function TMSH.GetApplicationAcknowledgmentType: string;
@@ -1121,6 +1333,11 @@ begin
   Result := GetValue(Integer(msheMessageType));
 end;
 
+function TMSH.GetMsgProfileId: string;
+begin
+  Result := GetValue(Integer(msheMsgProfileId));
+end;
+
 function TMSH.GetPrincipalLangMsg: string;
 begin
   Result := GetValue(Integer(mshePrincipalLangMsg));
@@ -1141,6 +1358,16 @@ begin
   Result := GetValue(Integer(msheReceivingFacility));
 end;
 
+function TMSH.GetReceivNetworkAddress: string;
+begin
+  Result := GetValue(Integer(msheReceivNetworkAddress));
+end;
+
+function TMSH.GetReceivResponsibleOrg: string;
+begin
+  Result := GetValue(Integer(msheReceivResponsibleOrg));
+end;
+
 function TMSH.GetSecurity: string;
 begin
   Result := GetValue(Integer(msheSecurity));
@@ -1154,6 +1381,16 @@ end;
 function TMSH.GetSendingFacility: string;
 begin
   Result := GetValue(Integer(msheSendingFacility));
+end;
+
+function TMSH.GetSendNetworkAddress: string;
+begin
+  Result := GetValue(Integer(msheSendNetworkAddress));
+end;
+
+function TMSH.GetSendResponsibleOrg: string;
+begin
+  Result := GetValue(Integer(msheSendResponsibleOrg));
 end;
 
 function TMSH.GetSequenceNumber: string;
@@ -1187,7 +1424,13 @@ begin
             ApplicationAcknowledgmentType + HL7_SEPARATOR +
             CountryCode + HL7_SEPARATOR +
             CharacterSet + HL7_SEPARATOR +
-            PrincipalLangMsg + HL7_SEPARATOR;
+            PrincipalLangMsg + HL7_SEPARATOR +
+            AltCharacterSetHandlingScheme + HL7_SEPARATOR +
+            MsgProfileId + HL7_SEPARATOR +
+            SendResponsibleOrg + HL7_SEPARATOR +
+            ReceivResponsibleOrg + HL7_SEPARATOR +
+            SendNetworkAddress + HL7_SEPARATOR +
+            ReceivNetworkAddress;
 end;
 
 { TOBR }
@@ -1254,12 +1497,12 @@ end;
 
 function TOBR.GetObservationDateTime: TDateTime;
 begin
-  Result := MedDateStrToDate(GetValue(Integer(obreObservationDateTime)));
+  Result := MedDateTimeStrToDateTime(GetValue(Integer(obreObservationDateTime)));
 end;
 
 function TOBR.GetObservationEndDateTime: TDateTime;
 begin
-  Result := MedDateStrToDate(GetValue(Integer(obreObservationEndDateTime)));
+  Result := MedDateTimeStrToDateTime(GetValue(Integer(obreObservationEndDateTime)));
 end;
 
 function TOBR.GetOrderCallbackPhoneNumber: string;
@@ -1411,8 +1654,8 @@ begin
             UniversalServiceID + HL7_SEPARATOR +
             Priority + HL7_SEPARATOR +
             RequestedDateTime + HL7_SEPARATOR +
-            DateToMedDateStr(ObservationDateTime) + HL7_SEPARATOR +
-            DateToMedDateStr(ObservationEndDateTime) + HL7_SEPARATOR +
+            DateTimeToMedDateTimeStr(ObservationDateTime) + HL7_SEPARATOR +
+            DateTimeToMedDateTimeStr(ObservationEndDateTime) + HL7_SEPARATOR +
             CollectionVolume + HL7_SEPARATOR +
             CollectorIdentifier + HL7_SEPARATOR +
             SpecimenActionCode + HL7_SEPARATOR +
@@ -1624,14 +1867,89 @@ end;
 
 { TOBXSpec }
 
+function TOBXSpec.GetComment: string;
+begin
+  if TextST = OBX_TEXT_ST_SPEC_LABEL then
+    Result := GetSubElement(ObservationIdentifier, HL7_SEPARATOR_COMPONENT, Integer(ssoTextST));
+end;
+
+function TOBXSpec.GetDiagnosis: string;
+begin
+  Result := '';
+  if TextST = OBX_TEXT_ST_FINAL_DIAGNOSTIC then
+    Result := GetValue(Integer(obxeObservationValue));
+end;
+
+function TOBXSpec.GetGrossDescription: string;
+begin
+  Result := '';
+  if TextST = OBX_TEXT_ST_GROSS_DESC then
+    Result := GetValue(Integer(obxeObservationValue));
+end;
+
 function TOBXSpec.GetIdentifier: string;
 begin
   Result := GetSubElement(ObservationIdentifier, HL7_SEPARATOR_COMPONENT, Integer(ssoIdentifierST));
 end;
 
+function TOBXSpec.GetMicroscopicDesc: string;
+begin
+  Result := '';
+  if TextST = OBX_TEXT_ST_MICROSCOPIC_OBSERV then
+    Result := GetValue(Integer(obxeObservationValue));
+end;
+
+function TOBXSpec.GetSpecimenLabel: string;
+begin
+  Result := '';
+  if TextST = OBX_TEXT_ST_SPEC_LABEL then
+    Result := GetValue(Integer(obxeObservationValue));
+end;
+
 function TOBXSpec.GetTextST: string;
 begin
   Result := GetSubElement(ObservationIdentifier, HL7_SEPARATOR_COMPONENT, Integer(ssoTextST));
+end;
+
+{ TSpeciman }
+
+constructor TSpeciman.Create(AId: string);
+begin
+  FId := AId;
+end;
+
+{ TSpecimanList }
+
+function TSpecimanList.AddSpeciman(AId: string): TSpeciman;
+begin
+  Add(TSpeciman.Create(AId));
+  Result := TSpeciman(Items[Count - 1]);
+end;
+
+function TSpecimanList.GetSpecimanById(AId: string): TSpeciman;
+var
+  I: Integer;
+begin
+  Result := nil;
+  for I := 0 to Count - 1 do
+  if TSpeciman(Items[I]).Id = AId then
+  begin
+    Result := TSpeciman(Items[I]);
+    Break;
+  end;
+end;
+
+function TSpecimanList.IsExist(AId: string): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to Count - 1 do
+  if TSpeciman(Items[I]).Id = AId then
+  begin
+    Result := True;
+    Break;
+  end;
 end;
 
 end.

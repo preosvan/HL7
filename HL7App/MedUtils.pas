@@ -55,12 +55,16 @@ end;
 
 function DateToMedDateStr(ADate: TDate): string;
 begin
-  Result := FormatDateTime('yyyymmdd', ADate);
+  Result := EmptyStr;
+  if ADate <> 0 then
+    Result := FormatDateTime('yyyymmdd', ADate);
 end;
 
 function DateTimeToMedDateTimeStr(ADateTime: TDateTime): string;
 begin
-  Result := DateToMedDateStr(DateOf(ADateTime)) + FormatDateTime('hhnnss', ADateTime);
+  Result := EmptyStr;
+  if ADateTime <> 0 then
+    Result := DateToMedDateStr(DateOf(ADateTime)) + FormatDateTime('hhnn', TimeOf(ADateTime));
 end;
 
 function MedDateTimeStrToDateTime(AMedDateTime: string): TDateTime;
@@ -72,10 +76,9 @@ begin
 
   DTDelim := AMedDateTime;
   DTDelim := Copy(DTDelim, 9, 2) + ':' +
-             Copy(DTDelim, 11, 2) + ':' +
-             Copy(DTDelim, 13, 2);
+             Copy(DTDelim, 11, 2);
   FS := TFormatSettings.Create;
-  FS.ShortTimeFormat := 'hh:nn:ss';
+  FS.ShortTimeFormat := 'hh:nn';
   FS.TimeSeparator := ':';
   Result := DateOf(Result) + TimeOf(StrToTimeDef(DTDelim, 0, FS));
 end;
@@ -88,6 +91,7 @@ begin
   Result := EmptyStr;
   StringList := TStringList.Create;
   try
+    StringList.StrictDelimiter := True;
     StringList.Delimiter := ADelimiter;
     StringList.DelimitedText := AElement;
     if StringList.Count > AIdxSubElement  then

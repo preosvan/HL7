@@ -21,7 +21,13 @@ type
                  msheApplicationAcknowledgmentType,
                  msheCountryCode,
                  msheCharacterSet,
-                 mshePrincipalLangMsg);
+                 mshePrincipalLangMsg,
+                 msheAltCharacterSetHandlingScheme,
+                 msheMsgProfileId,
+                 msheSendResponsibleOrg,
+                 msheReceivResponsibleOrg,
+                 msheSendNetworkAddress,
+                 msheReceivNetworkAddress);
 
   TPIDElement = (pideSegmentName,
                  pidePatientID,
@@ -53,7 +59,16 @@ type
                  pideVeteransMilitaryStatus,
                  pideNationality,
                  pidePatientDeathDateTime,
-                 pidePatientDeathIndicator);
+                 pidePatientDeathIndicator,
+                 pideIdentityUnknownIndicator,
+                 pideIdentityReliabilityCode,
+                 pideLastUpdateDateTime,
+                 pideLastUpdateFacility,
+                 pideSpeciesCode,
+                 pideBreedCode,
+                 pideStrain,
+                 pideProductionClassCode,
+                 pideTribalCitizenshi);
 
   TOBRElement = (obreSegnentName,
                  obrePlacerOrderNumber,
@@ -156,6 +171,11 @@ const
 
   HL7_SRV_ADDRESS = 'localhost';
   HL7_PORT = 20032;
+
+  OBX_TEXT_ST_SPEC_LABEL = 'Path report.site of origin';
+  OBX_TEXT_ST_GROSS_DESC = 'Path report.gross description';
+  OBX_TEXT_ST_MICROSCOPIC_OBSERV = 'Path report.microscopic observation';
+  OBX_TEXT_ST_FINAL_DIAGNOSTIC = 'Path report.final diagnosis';
 
 
 implementation
