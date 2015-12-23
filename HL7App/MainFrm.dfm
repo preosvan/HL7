@@ -20,8 +20,6 @@ object MainForm: TMainForm
     Height = 289
     Align = alClient
     TabOrder = 0
-    ExplicitTop = 65
-    ExplicitHeight = 508
   end
   object pnBottom: TPanel
     Left = 0
@@ -30,7 +28,6 @@ object MainForm: TMainForm
     Height = 41
     Align = alBottom
     TabOrder = 1
-    ExplicitTop = 573
     DesignSize = (
       738
       41)

@@ -14,6 +14,14 @@ type
   published
     constructor Create(AMsgText: string); overload;
     destructor Destroy; override;
+    class function IsExistSegment(AMsgText: TStrings;
+      ASegmentType: THL7SegmentType): Boolean;
+    class function CheckMSG(AMsgText: TStrings): Boolean;
+    class function GetSegmentMsgText(AMsgText: TStrings;
+      ASegmentType: THL7SegmentType): TStrings;
+    class function GetSegmentMsgTextStr(AMsgText: TStrings;
+      ASegmentType: THL7SegmentType): string;
+    class function GetSegmentNameValue(ASegmentType: THL7SegmentType): string;
     function GetValue(AIdxElement: Integer): string;
     function ToString: string; override;
     property MsgText: TStrings read FMsgText;
@@ -724,6 +732,14 @@ end;
 
 { THL7Segment }
 
+class function THL7Segment.CheckMSG(AMsgText: TStrings): Boolean;
+begin
+  Result := IsExistSegment(AMsgText, hlsMSH) and
+            IsExistSegment(AMsgText, hlsPID) and
+            IsExistSegment(AMsgText, hlsOBR) and
+            IsExistSegment(AMsgText, hlsOBX);
+end;
+
 constructor THL7Segment.Create(AMsgText: string);
 begin
   FMsgText := TStringList.Create;
@@ -744,11 +760,73 @@ begin
   Result := GetValue(0);
 end;
 
+class function THL7Segment.GetSegmentMsgTextStr(AMsgText: TStrings;
+  ASegmentType: THL7SegmentType): string;
+var
+  I: Integer;
+begin
+  for I := 0 to AMsgText.Count - 1 do
+  if GetSegmentNameValue(ASegmentType) = AMsgText[I].Substring(0, 3) then
+  begin
+    Result := AMsgText[I];
+    Break;
+  end;
+end;
+
+class function THL7Segment.GetSegmentNameValue(
+  ASegmentType: THL7SegmentType): string;
+begin
+  Result := '';
+  case ASegmentType of
+    hlsNone:
+      Result := HL7_SGM_NONE;
+    hlsMSH:
+      Result := HL7_SGM_MSH;
+    hlsPID:
+      Result := HL7_SGM_PID;
+    hlsOBR:
+      Result := HL7_SGM_OBR;
+    hlsOBX:
+      Result := HL7_SGM_OBX;
+  end;
+end;
+
+class function THL7Segment.GetSegmentMsgText(AMsgText: TStrings;
+  ASegmentType: THL7SegmentType): TStrings;
+var
+  I: Integer;
+begin
+  Result := TStringList.Create;
+  if Assigned(AMsgText) then
+  begin
+    for I := 0 to AMsgText.Count - 1 do
+    if GetSegmentNameValue(ASegmentType) = AMsgText[I].Substring(0, 3) then
+        Result.Add(AMsgText[I]);
+  end;
+end;
+
 function THL7Segment.GetValue(AIdxElement: Integer): string;
 begin
   Result := EmptyStr;
   if MsgText.Count > AIdxElement  then
     Result := MsgText[AIdxElement];
+end;
+
+class function THL7Segment.IsExistSegment(AMsgText: TStrings;
+  ASegmentType: THL7SegmentType): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  if Assigned(AMsgText) then
+  begin
+    for I := 0 to AMsgText.Count - 1 do
+    if GetSegmentNameValue(ASegmentType) = AMsgText[I].Substring(0, 3) then
+    begin
+      Result := True;
+      Break;
+    end;
+  end;
 end;
 
 function THL7Segment.ToString: string;

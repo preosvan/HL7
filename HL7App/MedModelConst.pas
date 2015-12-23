@@ -3,6 +3,12 @@ unit MedModelConst;
 interface
 
 type
+  THL7SegmentType = (hlsNone,
+                     hlsMSH,
+                     hlsPID,
+                     hlsOBR,
+                     hlsOBX);
+
   TMSHElement = (msheSegnentName,
                  msheEncodingCharacters,
                  msheSendingApp,
@@ -171,6 +177,12 @@ const
 
   HL7_SRV_ADDRESS = 'localhost';
   HL7_PORT = 20032;
+
+  HL7_SGM_NONE = '';
+  HL7_SGM_MSH = 'MSH';
+  HL7_SGM_PID = 'PID';
+  HL7_SGM_OBR = 'OBR';
+  HL7_SGM_OBX = 'OBX';
 
   OBX_TEXT_ST_SPEC_LABEL = 'Path report.site of origin';
   OBX_TEXT_ST_GROSS_DESC = 'Path report.gross description';
