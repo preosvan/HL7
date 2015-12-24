@@ -144,7 +144,7 @@ begin
           begin
             meParse.Lines.Add('Speciman ¹' + Spec.Id);
             meParse.Lines.Add('SpecimenLabel: ' + Spec.SpecimenLabel);
-            meParse.Lines.Add('MicroscopicDesc: ' + Spec.MicroscopicDesc);
+            meParse.Lines.Add('MicroscopicObserv: ' + Spec.MicroscopicObserv);
             meParse.Lines.Add('GrossDescription: ' + Spec.GrossDescription);
             meParse.Lines.Add('Diagnosis: ' + Spec.Diagnosis);
             meParse.Lines.Add('==============================');

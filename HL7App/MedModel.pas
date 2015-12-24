@@ -348,12 +348,12 @@ type
     function GetComment: string;
     function GetDiagnosis: string;
     function GetGrossDescription: string;
-    function GetMicroscopicDesc: string;
+    function GetMicroscopicObserv: string;
     function GetSpecimenLabel: string;
   public
     property Identifier: string read GetIdentifier;
     property TextST: string read GetTextST;
-    property MicroscopicDesc: string read GetMicroscopicDesc;
+    property MicroscopicObserv: string read GetMicroscopicObserv;
     property Diagnosis: string read GetDiagnosis;
     property Comment: string read GetComment;
     property GrossDescription: string read GetGrossDescription;
@@ -364,14 +364,14 @@ type
   private
     FComment: string;
     FGrossDescription: string;
-    FMicroscopicDesc: string;
+    FMicroscopicObserv: string;
     FDiagnosis: string;
     FId: string;
     FSpecimenLabel: string;
   public
     constructor Create(AId: string);
     property Id: string read FId write FId;
-    property MicroscopicDesc: string read FMicroscopicDesc write FMicroscopicDesc;
+    property MicroscopicObserv: string read FMicroscopicObserv write FMicroscopicObserv;
     property Diagnosis: string read FDiagnosis write FDiagnosis;
     property Comment: string read FComment write FComment;
     property GrossDescription: string read FGrossDescription write FGrossDescription;
@@ -388,15 +388,8 @@ type
   TOBXList = class(TList)
   private
     function GetTextSTByTypeAndId(AValueType, AIdentifier: string): string;
-    function GetMicroscopicDesc: string;
-    function GetDiagnosis: string;
-    function GetComment: string;
-    function GetGrossDescription: string;
   public
-    property MicroscopicDesc: string read GetMicroscopicDesc;
-    property Diagnosis: string read GetDiagnosis;
-    property Comment: string read GetComment;
-    property GrossDescription: string read GetGrossDescription;
+
   end;
 
   THL7Message = class
@@ -851,7 +844,6 @@ begin
   try
     for I := 0 to OBXStringList.Count - 1 do
       FOBXList.Add(TOBX.Create(OBXStringList[I]));
-//      FOBXList.Add(TOBX.Create(THL7Segment.GetSegmentMsgText(OBXStringList, hlsOBX)));
   finally
     OBXStringList.Free;
   end;
@@ -939,9 +931,9 @@ begin
       begin
         OBX := TOBXSpec(OBXList[J]);
         if (OBX.ObservationSubID = TOBXSpec(OBXList[I]).ObservationSubID) and
-           (OBX.MicroscopicDesc <> EmptyStr) then
+           (OBX.MicroscopicObserv <> EmptyStr) then
         begin
-          Speciman.MicroscopicDesc := OBX.MicroscopicDesc;
+          Speciman.MicroscopicObserv := OBX.MicroscopicObserv;
           Break;
         end;
       end;
@@ -1311,25 +1303,17 @@ begin
               '(accession_number, ' +
               ' specimen_label, ' +
               ' microscopic_description, ' +
-              ' diagnosis, ' +
-              ' comment, ' +
-              ' priority_id, ' +
               ' gross_description, ' +
               ' diagnosis) ' +
               'VALUES (:accession_number, ' +
                       ':specimen_label, ' +
                       ':microscopic_description, ' +
-                      ':diagnosis, ' +
-                      ':comment, ' +
-                      ':priority_id, ' +
                       ':gross_description, ' +
                       ':diagnosis)';
     SQL.Text := SqlStr;
     ParamByName('accession_number').AsString := Spec.AccessionNumber;
     ParamByName('specimen_label').AsString := TSpeciman(SpecimanList[I]).SpecimenLabel;
-    ParamByName('microscopic_description').AsString := TSpeciman(SpecimanList[I]).MicroscopicDesc;
-    ParamByName('comment').AsString := OBXList.Comment;
-    ParamByName('priority_id').AsString := Spec.PriorityId;
+    ParamByName('microscopic_description').AsString := TSpeciman(SpecimanList[I]).MicroscopicObserv;
     ParamByName('gross_description').AsString := TSpeciman(SpecimanList[I]).GrossDescription;
     ParamByName('diagnosis').AsString := TSpeciman(SpecimanList[I]).Diagnosis;
     ExecSQL;
@@ -1912,26 +1896,6 @@ end;
 
 { TOBXList }
 
-function TOBXList.GetComment: string;
-begin
-  Result := GetTextSTByTypeAndId('TX', '&TCM');
-end;
-
-function TOBXList.GetDiagnosis: string;
-begin
-  Result := GetTextSTByTypeAndId('TX', '&IMP');
-end;
-
-function TOBXList.GetGrossDescription: string;
-begin
-  Result := GetTextSTByTypeAndId('TX', '&GDT');
-end;
-
-function TOBXList.GetMicroscopicDesc: string;
-begin
-  Result := GetTextSTByTypeAndId('TX', '&MDT');
-end;
-
 function TOBXList.GetTextSTByTypeAndId(AValueType, AIdentifier: string): string;
 var
   I: Integer;
@@ -1977,7 +1941,7 @@ begin
   Result := GetSubElement(ObservationIdentifier, HL7_SEPARATOR_COMPONENT, Integer(ssoIdentifierST));
 end;
 
-function TOBXSpec.GetMicroscopicDesc: string;
+function TOBXSpec.GetMicroscopicObserv: string;
 begin
   Result := '';
   if TextST = OBX_TEXT_ST_MICROSCOPIC_OBSERV then
