@@ -235,37 +235,37 @@ var
   MsgText: string;
   Id: Integer;
 begin
-  if CheckHL7(meMsg.Lines, hlsNone) then
+  Id := StrToIntDef(SpinEditID.Text, 0);
+  if Id < 1 then
   begin
-    Id := StrToIntDef(SpinEditID.Text, 0);
-    if Id < 1 then
+    if CheckHL7(meMsg.Lines, hlsNone) then
       MsgText := meMsg.Text
-    else
-    begin
-      Msg := THL7Message.LoadById(DM.SQLQuery, Id);
-      try
-        MsgText := Msg.ToString;
-      finally
-        Msg.Free;
-      end;
+  end
+  else
+  begin
+    Msg := THL7Message.LoadById(DM.SQLQuery, Id);
+    try
+      MsgText := Msg.ToString;
+    finally
+      Msg.Free;
     end;
+  end;
 
-    DM.SentMsg := '';
-    case DM.HL7Client.SynchronousSend(MsgText, S) of
-      srError:
-        raise exception.create('internal error: ' + S);
-      srNoConnection:
-        raise exception.create('not connected');
-      srTimeout:
-        raise exception.create('no response from server');
-      srOK:
-        begin
-          meParse.Text := S;
-          meParse.Lines.Append(DM.SentMsg);
-        end;
-      srSent:
-        raise exception.create('can''t happen');
-    end;
+  DM.SentMsg := '';
+  case DM.HL7Client.SynchronousSend(MsgText, S) of
+    srError:
+      raise exception.create('internal error: ' + S);
+    srNoConnection:
+      raise exception.create('not connected');
+    srTimeout:
+      raise exception.create('no response from server');
+    srOK:
+      begin
+        meParse.Text := S;
+        meParse.Lines.Append(DM.SentMsg);
+      end;
+    srSent:
+      raise exception.create('can''t happen');
   end;
 end;
 

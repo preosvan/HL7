@@ -110,7 +110,7 @@ object MainForm: TMainForm
       MaxValue = 0
       MinValue = 0
       TabOrder = 6
-      Value = 1
+      Value = 43
     end
   end
   object meMsg: TMemo

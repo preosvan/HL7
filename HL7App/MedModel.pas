@@ -321,8 +321,10 @@ type
     function GetUnits: string;
     function GetUserDefinedAccessChecks: string;
     function GetValueType: string;
+    function GetOBXNumber: string;
   public
     function ToString: string; override;
+    property OBXNumber: string read GetOBXNumber;
     property ValueType: string read GetValueType;
     property ObservationIdentifier: string read GetObservationIdentifier;
     property ObservationSubID: string read GetObservationSubID;
@@ -362,27 +364,21 @@ type
 
   TSpeciman = class
   private
-    FComment: string;
     FGrossDescription: string;
     FMicroscopicObserv: string;
     FDiagnosis: string;
     FId: string;
     FSpecimenLabel: string;
   public
-    constructor Create(AId: string);
+    constructor Create(AId: string); overload;
+    constructor Create(AId, AMicroscopicObserv, ADiagnosis, AGrossDescription,
+      ASpecimenLabel: string); overload;
+    function ToString: string; override;
     property Id: string read FId write FId;
     property MicroscopicObserv: string read FMicroscopicObserv write FMicroscopicObserv;
     property Diagnosis: string read FDiagnosis write FDiagnosis;
-    property Comment: string read FComment write FComment;
     property GrossDescription: string read FGrossDescription write FGrossDescription;
     property SpecimenLabel: string read FSpecimenLabel write FSpecimenLabel;
-  end;
-
-  TSpecimanList = class(TList)
-  public
-    function AddSpeciman(AId: string): TSpeciman;
-    function IsExist(AId: string): Boolean;
-    function GetSpecimanById(AId: string): TSpeciman;
   end;
 
   TOBXList = class(TList)
@@ -390,6 +386,15 @@ type
     function GetTextSTByTypeAndId(AValueType, AIdentifier: string): string;
   public
 
+  end;
+
+  TSpecimanList = class(TList)
+  public
+    function AddSpeciman(AId: string): TSpeciman;
+    function IsExist(AId: string): Boolean;
+    function GetSpecimanById(AId: string): TSpeciman;
+    procedure SaveToDB(ASQLQuery: TSQLQuery; AAccessionNumber: string);
+    procedure Load(var ASQLQuery: TSQLQuery; AId: Integer);
   end;
 
   THL7Message = class
@@ -402,8 +407,8 @@ type
     procedure InitSpecimanList;
     class function LoadMSHById(ASQLQuery: TSQLQuery; AId: Integer): string;
     class function LoadPIDById(var ASQLQuery: TSQLQuery; AId: Integer): string;
-    class function LoadOBRById(ASQLQuery: TSQLQuery; AId: Integer): string;
-    class function LoadOBXById(ASQLQuery: TSQLQuery; AId: Integer): string;
+    class function LoadOBRById(var ASQLQuery: TSQLQuery; AId: Integer): string;
+    function LoadOBXById(var ASQLQuery: TSQLQuery; AId: Integer): TStrings;
     procedure SaveAccession(ASQLQuery: TSQLQuery);
     procedure SavePatient(ASQLQuery: TSQLQuery);
     procedure SaveSpecimen(ASQLQuery: TSQLQuery);
@@ -412,6 +417,7 @@ type
     constructor Create(AMsg: string); overload;
     destructor Destroy; override;
     function CheckMessage: Boolean;
+    procedure InitMSG(AMsg: TStrings);
     function ToString: string; override;
     class function LoadById(var ASQLQuery: TSQLQuery; AId: Integer): THL7Message;
     procedure SaveToDB(ASQLQuery: TSQLQuery);
@@ -830,26 +836,8 @@ end;
 { THL7Message }
 
 constructor THL7Message.Create(AMsg: TStrings);
-var
-  I: Integer;
-  OBXStringList: TStrings;
 begin
-  FMSH := TMSH.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsMSH));
-  FPID := TPID.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsPID));
-  FOBR := TOBR.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsOBR));
-
-  FOBXList := TOBXList.Create;
-  OBXStringList := THL7Segment.GetSegmentMsgText(AMsg, hlsOBX);
-  if Assigned(OBXStringList) then
-  try
-    for I := 0 to OBXStringList.Count - 1 do
-      FOBXList.Add(TOBX.Create(OBXStringList[I]));
-  finally
-    OBXStringList.Free;
-  end;
-
-  FSpecimanList := TSpecimanList.Create;
-  InitSpecimanList;
+  InitMSG(AMsg);
 end;
 
 function THL7Message.CheckMessage: Boolean;
@@ -885,6 +873,29 @@ begin
   if Assigned(FSpecimanList) then
     FSpecimanList.Free;
   inherited;
+end;
+
+procedure THL7Message.InitMSG(AMsg: TStrings);
+var
+  I: Integer;
+  OBXStringList: TStrings;
+begin
+  FMSH := TMSH.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsMSH));
+  FPID := TPID.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsPID));
+  FOBR := TOBR.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsOBR));
+
+  FOBXList := TOBXList.Create;
+  OBXStringList := THL7Segment.GetSegmentMsgText(AMsg, hlsOBX);
+  if Assigned(OBXStringList) then
+  try
+    for I := 0 to OBXStringList.Count - 1 do
+      FOBXList.Add(TOBX.Create(OBXStringList[I]));
+  finally
+    OBXStringList.Free;
+  end;
+
+  FSpecimanList := TSpecimanList.Create;
+  InitSpecimanList;
 end;
 
 procedure THL7Message.InitSpecimanList;
@@ -954,15 +965,28 @@ end;
 
 class function THL7Message.LoadById(var ASQLQuery: TSQLQuery; AId: Integer): THL7Message;
 var
-  StringList: TStrings;
+  StringList, StringListOBX: TStrings;
+  I: Integer;
 begin
+  Result := THL7Message.Create;
   StringList := TStringList.Create;
   try
+    //MSH
     StringList.Add(LoadMSHById(ASQLQuery, AId));
+    //PID
     StringList.Add(LoadPIDById(ASQLQuery, AId));
+    //OBR
     StringList.Add(LoadOBRById(ASQLQuery, AId));
-    StringList.Add(LoadOBXById(ASQLQuery, AId));
-    Result := THL7Message.Create(StringList);
+    //OBX
+    Result.InitMSG(StringList);
+    StringListOBX := Result.LoadOBXById(ASQLQuery, AId);
+    try
+      for I := 0 to StringListOBX.Count - 1 do
+        StringList.Add(StringListOBX[I]);
+      Result.InitMSG(StringList);
+    finally
+      StringListOBX.Free;
+    end;
   finally
     StringList.Free;
   end;
@@ -1022,105 +1046,217 @@ begin
   Result := Result + HL7_SEPARATOR + '';
 end;
 
-class function THL7Message.LoadOBRById(ASQLQuery: TSQLQuery; AId: Integer): string;
+class function THL7Message.LoadOBRById(var ASQLQuery: TSQLQuery; AId: Integer): string;
 begin
   //SegnentName
   Result := 'OBR';
-  //PlacerOrderNumber
-  Result := Result + HL7_SEPARATOR + '';
-  //FillerOrderNumber
-  Result := Result + HL7_SEPARATOR + '';
-  //UniversalServiceID
-  Result := Result + HL7_SEPARATOR + '';
-  //Priority
-  Result := Result + HL7_SEPARATOR + '';
-  //RequestedDateTime
-  Result := Result + HL7_SEPARATOR + '';
-  //ObservationDateTime
-  Result := Result + HL7_SEPARATOR + '';
-  //ObservationEndDateTime
-  Result := Result + HL7_SEPARATOR + '';
-  //CollectionVolume
-  Result := Result + HL7_SEPARATOR + '';
-  //CollectorIdentifier
-  Result := Result + HL7_SEPARATOR + '';
-  //SpecimenActionCode
-  Result := Result + HL7_SEPARATOR + '';
-  //DangerCode
-  Result := Result + HL7_SEPARATOR + '';
-  //RelevantClinicalInfo
-  Result := Result + HL7_SEPARATOR + '';
-  //SpecimenReceivedDateTime
-  Result := Result + HL7_SEPARATOR + '';
-  //SpecimenSource
-  Result := Result + HL7_SEPARATOR + '';
-  //OrderingProvider
-  Result := Result + HL7_SEPARATOR + '';
-  //OrderCallbackPhoneNumber
-  Result := Result + HL7_SEPARATOR + '';
-  //PlacerField1
-  Result := Result + HL7_SEPARATOR + '';
-  //PlacerField2
-  Result := Result + HL7_SEPARATOR + '';
-  //FillerField1
-  Result := Result + HL7_SEPARATOR + '';
-  //FillerField2
-  Result := Result + HL7_SEPARATOR + '';
-  //ResultsRptStatusChngDateTime
-  Result := Result + HL7_SEPARATOR + '';
-  //ChargeToPractice
-  Result := Result + HL7_SEPARATOR + '';
-  //DiagnosticServSectID
-  Result := Result + HL7_SEPARATOR + '';
-  //ResultStatus
-  Result := Result + HL7_SEPARATOR + '';
-  //ParentResult
-  Result := Result + HL7_SEPARATOR + '';
-  //QuantityOrTiming
-  Result := Result + HL7_SEPARATOR + '';
-  //ResultCopiesTo
-  Result := Result + HL7_SEPARATOR + '';
-  //Parent
-  Result := Result + HL7_SEPARATOR + '';
-  //TransportationMode
-  Result := Result + HL7_SEPARATOR + '';
-  //ReasonForStudy
-  Result := Result + HL7_SEPARATOR + '';
-  //PrincipalResultInterpreter
-  Result := Result + HL7_SEPARATOR + '';
-  //AssistantResultInterpreter
-  Result := Result + HL7_SEPARATOR + '';
-  //Technician
-  Result := Result + HL7_SEPARATOR + '';
-  //Transcriptionist
-  Result := Result + HL7_SEPARATOR + '';
-  //ScheduledDateTime
-  Result := Result + HL7_SEPARATOR + '';
-  //NumberOfSampleContainers
-  Result := Result + HL7_SEPARATOR + '';
-  //TransportLogisticsOfCollectedSample
-  Result := Result + HL7_SEPARATOR + '';
-  //CollectorsComment
-  Result := Result + HL7_SEPARATOR + '';
-  //TransportArrangementResponsibility
-  Result := Result + HL7_SEPARATOR + '';
-  //TransportArranged
-  Result := Result + HL7_SEPARATOR + '';
-  //EscortRequired
-  Result := Result + HL7_SEPARATOR + '';
-  //PlannedPatientTransportComment
-  Result := Result + HL7_SEPARATOR + '';
+
+  ASQLQuery.SQL.Text :=
+    'select * from accession a where a.accession_id = ' + IntToStr(AId);
+  try
+    ASQLQuery.Open;
+    if not ASQLQuery.Eof then
+    with ASQLQuery do
+    begin
+      //PlacerOrderNumber
+      Result := Result + HL7_SEPARATOR + '1';
+      //FillerOrderNumber
+      Result := Result + HL7_SEPARATOR + '';
+      //UniversalServiceID
+      Result := Result + HL7_SEPARATOR + FieldByName('accession_number').AsString;
+      //Priority
+      Result := Result + HL7_SEPARATOR + '';
+      //RequestedDateTime
+      Result := Result + HL7_SEPARATOR + '';
+      //ObservationDateTime
+      Result := Result + HL7_SEPARATOR + '';
+      //ObservationEndDateTime
+      Result := Result + HL7_SEPARATOR + '';
+      //CollectionVolume
+      Result := Result + HL7_SEPARATOR + '';
+      //CollectorIdentifier
+      Result := Result + HL7_SEPARATOR + '';
+      //SpecimenActionCode
+      Result := Result + HL7_SEPARATOR + '';
+      //DangerCode
+      Result := Result + HL7_SEPARATOR + '';
+      //RelevantClinicalInfo
+      Result := Result + HL7_SEPARATOR + '';
+      //SpecimenReceivedDateTime
+      Result := Result + HL7_SEPARATOR + '';
+      //SpecimenSource
+      Result := Result + HL7_SEPARATOR + '';
+      //OrderingProvider
+      Result := Result + HL7_SEPARATOR + '';
+      //OrderCallbackPhoneNumber
+      Result := Result + HL7_SEPARATOR + '';
+      //PlacerField1
+      Result := Result + HL7_SEPARATOR + '';
+      //PlacerField2
+      Result := Result + HL7_SEPARATOR + '';
+      //FillerField1
+      Result := Result + HL7_SEPARATOR + '';
+      //FillerField2
+      Result := Result + HL7_SEPARATOR + '';
+      //ResultsRptStatusChngDateTime
+      Result := Result + HL7_SEPARATOR + '';
+      //ChargeToPractice
+      Result := Result + HL7_SEPARATOR + '';
+      //DiagnosticServSectID
+      Result := Result + HL7_SEPARATOR + '';
+      //ResultStatus
+      Result := Result + HL7_SEPARATOR + '';
+      //ParentResult
+      Result := Result + HL7_SEPARATOR + '';
+      //QuantityOrTiming
+      Result := Result + HL7_SEPARATOR + '';
+      //ResultCopiesTo
+      Result := Result + HL7_SEPARATOR + '';
+      //Parent
+      Result := Result + HL7_SEPARATOR + '';
+      //TransportationMode
+      Result := Result + HL7_SEPARATOR + '';
+      //ReasonForStudy
+      Result := Result + HL7_SEPARATOR + '';
+      //PrincipalResultInterpreter
+      Result := Result + HL7_SEPARATOR + '';
+      //AssistantResultInterpreter
+      Result := Result + HL7_SEPARATOR + '';
+      //Technician
+      Result := Result + HL7_SEPARATOR + '';
+      //Transcriptionist
+      Result := Result + HL7_SEPARATOR + '';
+      //ScheduledDateTime
+      Result := Result + HL7_SEPARATOR + '';
+      //NumberOfSampleContainers
+      Result := Result + HL7_SEPARATOR + '';
+      //TransportLogisticsOfCollectedSample
+      Result := Result + HL7_SEPARATOR + '';
+      //CollectorsComment
+      Result := Result + HL7_SEPARATOR + '';
+      //TransportArrangementResponsibility
+      Result := Result + HL7_SEPARATOR + '';
+      //TransportArranged
+      Result := Result + HL7_SEPARATOR + '';
+      //EscortRequired
+      Result := Result + HL7_SEPARATOR + '';
+      //PlannedPatientTransportComment
+      Result := Result + HL7_SEPARATOR + '';
+    end;
+  except
+
+  end;
 end;
 
-class function THL7Message.LoadOBXById(ASQLQuery: TSQLQuery; AId: Integer): string;
+function THL7Message.LoadOBXById(var ASQLQuery: TSQLQuery; AId: Integer): TStrings;
+var
+  I: Integer;
+  Speciman: TSpeciman;
 begin
-  Result := 'OBX';
+  if Assigned(SpecimanList) then
+    SpecimanList.Load(ASQLQuery, AId);
+
+  Result := TStringList.Create;
+  //SpecimenLabel
+  for I := 0 to SpecimanList.Count - 1 do
+  begin
+    Speciman := TSpeciman(SpecimanList[I]);
+    if Assigned(Speciman) then
+      if Speciman.SpecimenLabel <> EmptyStr then
+        Result.Add(HL7_SGM_OBX + HL7_SEPARATOR +
+                   IntToStr(Result.Count + 1) + HL7_SEPARATOR +
+                   'TX' + HL7_SEPARATOR +
+
+                   '00000-0' + HL7_SEPARATOR_COMPONENT + OBX_TEXT_ST_SPEC_LABEL +
+                   HL7_SEPARATOR_COMPONENT + 'LN' + HL7_SEPARATOR +
+                   Speciman.Id + HL7_SEPARATOR +
+                   Speciman.SpecimenLabel + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   'F'
+                   );
+  end;
+
+  //GrossDescription
+  for I := 0 to SpecimanList.Count - 1 do
+  begin
+    Speciman := TSpeciman(SpecimanList[I]);
+    if Assigned(Speciman) then
+      if Speciman.GrossDescription <> EmptyStr then
+        Result.Add(HL7_SGM_OBX + HL7_SEPARATOR +
+                   IntToStr(Result.Count + 1) + HL7_SEPARATOR +
+                   'TX' + HL7_SEPARATOR +
+
+                   '00000-0' + HL7_SEPARATOR_COMPONENT + OBX_TEXT_ST_GROSS_DESC +
+                   HL7_SEPARATOR_COMPONENT + 'LN' + HL7_SEPARATOR +
+                   Speciman.Id + HL7_SEPARATOR +
+                   Speciman.GrossDescription + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   'F'
+                   );
+  end;
+
+  //MicroscopicObserv
+  for I := 0 to SpecimanList.Count - 1 do
+  begin
+    Speciman := TSpeciman(SpecimanList[I]);
+    if Assigned(Speciman) then
+      if Speciman.MicroscopicObserv <> EmptyStr then
+        Result.Add(HL7_SGM_OBX + HL7_SEPARATOR +
+                   IntToStr(Result.Count + 1) + HL7_SEPARATOR +
+                   'TX' + HL7_SEPARATOR +
+
+                   '00000-0' + HL7_SEPARATOR_COMPONENT + OBX_TEXT_ST_MICROSCOPIC_OBSERV +
+                   HL7_SEPARATOR_COMPONENT + 'LN' + HL7_SEPARATOR +
+                   Speciman.Id + HL7_SEPARATOR +
+                   Speciman.MicroscopicObserv + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   'F'
+                   );
+  end;
+
+  //Diagnosis
+  for I := 0 to SpecimanList.Count - 1 do
+  begin
+    Speciman := TSpeciman(SpecimanList[I]);
+    if Assigned(Speciman) then
+      if Speciman.Diagnosis <> EmptyStr then
+        Result.Add(HL7_SGM_OBX + HL7_SEPARATOR +
+                   IntToStr(Result.Count + 1) + HL7_SEPARATOR +
+                   'TX' + HL7_SEPARATOR +
+
+                   '00000-0' + HL7_SEPARATOR_COMPONENT + OBX_TEXT_ST_FINAL_DIAGNOSTIC +
+                   HL7_SEPARATOR_COMPONENT + 'LN' + HL7_SEPARATOR +
+                   Speciman.Id + HL7_SEPARATOR +
+                   Speciman.Diagnosis + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   '' + HL7_SEPARATOR +
+                   'F'
+                   );
+  end;
 end;
 
 class function THL7Message.LoadPIDById(var ASQLQuery: TSQLQuery; AId: Integer): string;
 begin
   Result := 'PID';
-  ASQLQuery.SQL.Text := 'select * from patient t where t.patient_id = ' + IntToStr(AId);
+  ASQLQuery.SQL.Text :=
+    'select a.accession_id, t.* from accession a ' +
+    'left join patient t on a.patient_id = t.patient_id ' +
+    'where a.accession_id = ' + IntToStr(AId);
   try
     ASQLQuery.Open;
     if not ASQLQuery.Eof then
@@ -1290,34 +1426,8 @@ begin
 end;
 
 procedure THL7Message.SaveSpecimen(ASQLQuery: TSQLQuery);
-var
-  Spec: TAccessionSpec;
-  SqlStr: string;
-  I: Integer;
 begin
-  Spec := TAccessionSpec(OBR);
-  for I := 0 to SpecimanList.Count - 1 do
-  with ASQLQuery do
-  begin
-    SqlStr := 'INSERT OR REPLACE INTO specimen ' +
-              '(accession_number, ' +
-              ' specimen_label, ' +
-              ' microscopic_description, ' +
-              ' gross_description, ' +
-              ' diagnosis) ' +
-              'VALUES (:accession_number, ' +
-                      ':specimen_label, ' +
-                      ':microscopic_description, ' +
-                      ':gross_description, ' +
-                      ':diagnosis)';
-    SQL.Text := SqlStr;
-    ParamByName('accession_number').AsString := Spec.AccessionNumber;
-    ParamByName('specimen_label').AsString := TSpeciman(SpecimanList[I]).SpecimenLabel;
-    ParamByName('microscopic_description').AsString := TSpeciman(SpecimanList[I]).MicroscopicObserv;
-    ParamByName('gross_description').AsString := TSpeciman(SpecimanList[I]).GrossDescription;
-    ParamByName('diagnosis').AsString := TSpeciman(SpecimanList[I]).Diagnosis;
-    ExecSQL;
-  end;
+  SpecimanList.SaveToDB(ASQLQuery, TAccessionSpec(OBR).AccessionNumber);
 end;
 
 procedure THL7Message.SaveToDB(ASQLQuery: TSQLQuery);
@@ -1809,6 +1919,11 @@ begin
   Result := GetValue(Integer(obxeObservResultStatus));
 end;
 
+function TOBX.GetOBXNumber: string;
+begin
+  Result := GetValue(Integer(obxeOBXNumber));
+end;
+
 function TOBX.GetProbability: string;
 begin
   Result := GetValue(Integer(obxeProbability));
@@ -1848,6 +1963,7 @@ function TOBX.ToString: string;
 begin
   Result := inherited;
   Result := Result + HL7_SEPARATOR +
+            OBXNumber + HL7_SEPARATOR +
             ValueType + HL7_SEPARATOR +
             ObservationIdentifier + HL7_SEPARATOR +
             ObservationSubID + HL7_SEPARATOR +
@@ -1871,7 +1987,6 @@ end;
 function TAccessionSpec.GetAccessionNumber: string;
 begin
   Result := GetValue(Integer(obreUniversalServiceID));
-//  Result := GetSubElement(FillerOrderNumber, HL7_SEPARATOR_COMPONENT, Integer(afnEntityId));
 end;
 
 function TAccessionSpec.GetNamespaceId: string;
@@ -1967,6 +2082,38 @@ begin
   FId := AId;
 end;
 
+constructor TSpeciman.Create(AId, AMicroscopicObserv, ADiagnosis, AGrossDescription,
+  ASpecimenLabel: string);
+begin
+  FId := AId;
+  FMicroscopicObserv := AMicroscopicObserv;
+  FDiagnosis := ADiagnosis;
+  FGrossDescription := AGrossDescription;
+  FSpecimenLabel := ASpecimenLabel;
+end;
+
+function TSpeciman.ToString: string;
+begin
+//  Result := HL7_SGM_OBX + HL7_SEPARATOR +
+//            Id + HL7_SEPARATOR +
+//            'TX' + HL7_SEPARATOR +
+//
+//            ObservationSubID + HL7_SEPARATOR +
+//            ObservationValue + HL7_SEPARATOR +
+//            Units + HL7_SEPARATOR +
+//            ReferencesRange + HL7_SEPARATOR +
+//            AbnormalFlags + HL7_SEPARATOR +
+//            Probability + HL7_SEPARATOR +
+//            NatureOfAbnormalTest + HL7_SEPARATOR +
+//            ObservResultStatus + HL7_SEPARATOR +
+//            DateLastObsNormalValues + HL7_SEPARATOR +
+//            UserDefinedAccessChecks + HL7_SEPARATOR +
+//            DateTimeOfObservation + HL7_SEPARATOR +
+//            ProducersID + HL7_SEPARATOR +
+//            ResponsibleObserver + HL7_SEPARATOR +
+//            ObservationMethod + HL7_SEPARATOR;
+end;
+
 { TSpecimanList }
 
 function TSpecimanList.AddSpeciman(AId: string): TSpeciman;
@@ -1998,6 +2145,62 @@ begin
   begin
     Result := True;
     Break;
+  end;
+end;
+
+procedure TSpecimanList.Load(var ASQLQuery: TSQLQuery; AId: Integer);
+begin
+  ASQLQuery.SQL.Text :=
+    'select a.accession_id, a.accession_number, t.* from accession a ' +
+    'left join specimen t on a.accession_number = t.accession_number ' +
+    'where a.accession_id = ' + IntToStr(AId);
+  try
+    ASQLQuery.Open;
+    while not ASQLQuery.Eof do
+    with ASQLQuery do
+    begin
+      Add(TSpeciman.Create(
+        IntToStr(Count + 1),
+        FieldByName('microscopic_description').AsString,
+        FieldByName('diagnosis').AsString,
+        FieldByName('gross_description').AsString,
+        FieldByName('specimen_label').AsString));
+      Next;
+    end;
+  except
+
+  end;
+end;
+
+procedure TSpecimanList.SaveToDB(ASQLQuery: TSQLQuery;
+  AAccessionNumber: string);
+var
+  SqlStr: string;
+  I: Integer;
+  Speciman: TSpeciman;
+begin
+  for I := 0 to Count - 1 do
+  with ASQLQuery do
+  begin
+    Speciman := TSpeciman(Items[I]);
+    SqlStr := 'INSERT OR REPLACE INTO specimen ' +
+              '(accession_number, ' +
+              ' specimen_label, ' +
+              ' microscopic_description, ' +
+              ' gross_description, ' +
+              ' diagnosis) ' +
+              'VALUES (:accession_number, ' +
+                      ':specimen_label, ' +
+                      ':microscopic_description, ' +
+                      ':gross_description, ' +
+                      ':diagnosis)';
+    SQL.Text := SqlStr;
+    ParamByName('accession_number').AsString := AAccessionNumber;
+    ParamByName('specimen_label').AsString := Speciman.SpecimenLabel;
+    ParamByName('microscopic_description').AsString := Speciman.MicroscopicObserv;
+    ParamByName('gross_description').AsString := Speciman.GrossDescription;
+    ParamByName('diagnosis').AsString := Speciman.Diagnosis;
+    ExecSQL;
   end;
 end;
 
