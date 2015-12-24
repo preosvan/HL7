@@ -839,19 +839,25 @@ end;
 constructor THL7Message.Create(AMsg: TStrings);
 var
   I: Integer;
+  OBXStringList: TStrings;
 begin
-  if AMsg.Count > 2 then
-  begin
-    FMSH := TMSH.Create(AMsg[0]);
-    FPID := TPID.Create(AMsg[1]);
-    FOBR := TOBR.Create(AMsg[2]);
-    FOBXList := TOBXList.Create;
-    for I := 3 to AMsg.Count - 1 do
-      FOBXList.Add(TOBX.Create(AMsg[I]));
+  FMSH := TMSH.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsMSH));
+  FPID := TPID.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsPID));
+  FOBR := TOBR.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsOBR));
 
-    FSpecimanList := TSpecimanList.Create;
-    InitSpecimanList;
+  FOBXList := TOBXList.Create;
+  OBXStringList := THL7Segment.GetSegmentMsgText(AMsg, hlsOBX);
+  if Assigned(OBXStringList) then
+  try
+    for I := 0 to OBXStringList.Count - 1 do
+      FOBXList.Add(TOBX.Create(OBXStringList[I]));
+//      FOBXList.Add(TOBX.Create(THL7Segment.GetSegmentMsgText(OBXStringList, hlsOBX)));
+  finally
+    OBXStringList.Free;
   end;
+
+  FSpecimanList := TSpecimanList.Create;
+  InitSpecimanList;
 end;
 
 function THL7Message.CheckMessage: Boolean;
@@ -1880,7 +1886,8 @@ end;
 
 function TAccessionSpec.GetAccessionNumber: string;
 begin
-  Result := GetSubElement(FillerOrderNumber, HL7_SEPARATOR_COMPONENT, Integer(afnEntityId));
+  Result := GetValue(Integer(obreUniversalServiceID));
+//  Result := GetSubElement(FillerOrderNumber, HL7_SEPARATOR_COMPONENT, Integer(afnEntityId));
 end;
 
 function TAccessionSpec.GetNamespaceId: string;

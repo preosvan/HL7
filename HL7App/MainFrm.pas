@@ -19,6 +19,7 @@ type
     btnSave: TButton;
     btnSend: TButton;
     SpinEditID: TSpinEdit;
+    Splitter: TSplitter;
     procedure btnMSHClick(Sender: TObject);
     procedure btnPatientClick(Sender: TObject);
     procedure btnOBRClick(Sender: TObject);

@@ -13,13 +13,28 @@ object MainForm: TMainForm
   OldCreateOrder = False
   PixelsPerInch = 96
   TextHeight = 13
+  object Splitter: TSplitter
+    Left = 0
+    Top = 244
+    Width = 738
+    Height = 3
+    Cursor = crVSplit
+    Align = alTop
+    ExplicitTop = 241
+    ExplicitWidth = 289
+  end
   object meParse: TMemo
     Left = 0
-    Top = 241
+    Top = 247
     Width = 738
-    Height = 289
+    Height = 283
     Align = alClient
+    ReadOnly = True
+    ScrollBars = ssBoth
     TabOrder = 0
+    WordWrap = False
+    ExplicitTop = 244
+    ExplicitHeight = 286
   end
   object pnBottom: TPanel
     Left = 0
@@ -102,7 +117,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 738
-    Height = 241
+    Height = 244
     Align = alTop
     Lines.Strings = (
       
@@ -199,7 +214,9 @@ object MainForm: TMainForm
         'mor into deep fatty tissue. Metastatic carcinoma, left axillary ' +
         'lymph node (1) Level I. Free of disease 17 of 18 lymph nodes - L' +
         'evel I (12), Level II (2) and Level III (3).||||||F')
+    ScrollBars = ssBoth
     TabOrder = 2
     WordWrap = False
+    ExplicitTop = 8
   end
 end
