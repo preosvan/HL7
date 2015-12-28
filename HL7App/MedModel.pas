@@ -17,8 +17,8 @@ type
     class function IsExistSegment(AMsgText: TStrings;
       ASegmentType: THL7SegmentType): Boolean;
     class function CheckMSG(AMsgText: TStrings): Boolean;
-    class function GetSegmentMsgText(AMsgText: TStrings;
-      ASegmentType: THL7SegmentType): TStrings;
+    class procedure GetSegmentMsgText(AMsgText: TStrings;
+      ASegmentType: THL7SegmentType; var AOutStrings: TStrings);
     class function GetSegmentMsgTextStr(AMsgText: TStrings;
       ASegmentType: THL7SegmentType): string;
     class function GetSegmentNameValue(ASegmentType: THL7SegmentType): string;
@@ -381,6 +381,10 @@ type
     property SpecimenLabel: string read FSpecimenLabel write FSpecimenLabel;
   end;
 
+  TPIDList = class(TList);
+
+  TOBRList = class(TList);
+
   TOBXList = class(TList)
   private
     function GetTextSTByTypeAndId(AValueType, AIdentifier: string): string;
@@ -394,7 +398,7 @@ type
     function IsExist(AId: string): Boolean;
     function GetSpecimanById(AId: string): TSpeciman;
     procedure SaveToDB(ASQLQuery: TSQLQuery; AAccessionNumber: string);
-    procedure Load(var ASQLQuery: TSQLQuery; AId: Integer);
+    procedure Load(var ASQLQuery: TSQLQuery);
   end;
 
   THL7Message = class
@@ -404,11 +408,19 @@ type
     FPID: TPID;
     FOBXList: TOBXList;
     FSpecimanList: TSpecimanList;
+    FPIDList: TPIDList;
+    FOBRList: TOBRList;
     procedure InitSpecimanList;
-    class function LoadMSHById(ASQLQuery: TSQLQuery; AId: Integer): string;
+    class function LoadMSHById(ASQLQuery: TSQLQuery): string;
     class function LoadPIDById(var ASQLQuery: TSQLQuery; AId: Integer): string;
     class function LoadOBRById(var ASQLQuery: TSQLQuery; AId: Integer): string;
-    function LoadOBXById(var ASQLQuery: TSQLQuery; AId: Integer): TStrings;
+
+    function LoadPID(var ASQLQuery: TSQLQuery;
+      var APIDStrings: TStrings): TStrings;
+    procedure LoadOBR(var ASQLQuery: TSQLQuery;
+      var AOBRStrings: TStrings);
+    procedure LoadOBX(var ASQLQuery: TSQLQuery;
+      var AOBXStrings: TStrings);
     procedure SaveAccession(ASQLQuery: TSQLQuery);
     procedure SavePatient(ASQLQuery: TSQLQuery);
     procedure SaveSpecimen(ASQLQuery: TSQLQuery);
@@ -419,11 +431,13 @@ type
     function CheckMessage: Boolean;
     procedure InitMSG(AMsg: TStrings);
     function ToString: string; override;
-    class function LoadById(var ASQLQuery: TSQLQuery; AId: Integer): THL7Message;
+    class function Load(var ASQLQuery: TSQLQuery): THL7Message;
     procedure SaveToDB(ASQLQuery: TSQLQuery);
     property MSH: TMSH read FMSH;
     property PID: TPID read FPID;
     property OBR: TOBR read FOBR;
+    property PIDList: TPIDList read FPIDList;
+    property OBRList: TOBRList read FOBRList;
     property OBXList: TOBXList read FOBXList;
     property SpecimanList: TSpecimanList read FSpecimanList;
   end;
@@ -790,17 +804,16 @@ begin
   end;
 end;
 
-class function THL7Segment.GetSegmentMsgText(AMsgText: TStrings;
-  ASegmentType: THL7SegmentType): TStrings;
+class procedure THL7Segment.GetSegmentMsgText(AMsgText: TStrings;
+  ASegmentType: THL7SegmentType; var AOutStrings: TStrings);
 var
   I: Integer;
 begin
-  Result := TStringList.Create;
-  if Assigned(AMsgText) then
+  if Assigned(AMsgText) and Assigned(AOutStrings) then
   begin
     for I := 0 to AMsgText.Count - 1 do
     if GetSegmentNameValue(ASegmentType) = AMsgText[I].Substring(0, 3) then
-        Result.Add(AMsgText[I]);
+        AOutStrings.Add(AMsgText[I]);
   end;
 end;
 
@@ -868,6 +881,11 @@ begin
     FPID.Free;
   if Assigned(FOBR) then
     FOBR.Free;
+
+  if Assigned(FPIDList) then
+    FPIDList.Free;
+  if Assigned(FOBRList) then
+    FOBRList.Free;
   if Assigned(FOBXList) then
     FOBXList.Free;
   if Assigned(FSpecimanList) then
@@ -878,20 +896,35 @@ end;
 procedure THL7Message.InitMSG(AMsg: TStrings);
 var
   I: Integer;
-  OBXStringList: TStrings;
+  TmpStringList: TStrings;
 begin
   FMSH := TMSH.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsMSH));
   FPID := TPID.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsPID));
   FOBR := TOBR.Create(THL7Segment.GetSegmentMsgTextStr(AMsg, hlsOBR));
 
+  FPIDList := TPIDList.Create;
+  FOBRList := TOBRList.Create;
+
   FOBXList := TOBXList.Create;
-  OBXStringList := THL7Segment.GetSegmentMsgText(AMsg, hlsOBX);
-  if Assigned(OBXStringList) then
+  TmpStringList := TStringList.Create;
   try
-    for I := 0 to OBXStringList.Count - 1 do
-      FOBXList.Add(TOBX.Create(OBXStringList[I]));
+    //PID
+    TmpStringList.Clear;
+    THL7Segment.GetSegmentMsgText(AMsg, hlsPID, TmpStringList);
+    for I := 0 to TmpStringList.Count - 1 do
+      FPIDList.Add(TPID.Create(TmpStringList[I]));
+    //OBR
+    TmpStringList.Clear;
+    THL7Segment.GetSegmentMsgText(AMsg, hlsOBR, TmpStringList);
+    for I := 0 to TmpStringList.Count - 1 do
+      FOBRList.Add(TOBR.Create(TmpStringList[I]));
+    //OBX
+    TmpStringList.Clear;
+    THL7Segment.GetSegmentMsgText(AMsg, hlsOBX, TmpStringList);
+    for I := 0 to TmpStringList.Count - 1 do
+      FOBXList.Add(TOBX.Create(TmpStringList[I]));
   finally
-    OBXStringList.Free;
+    TmpStringList.Free;
   end;
 
   FSpecimanList := TSpecimanList.Create;
@@ -963,36 +996,32 @@ begin
   end;
 end;
 
-class function THL7Message.LoadById(var ASQLQuery: TSQLQuery; AId: Integer): THL7Message;
+class function THL7Message.Load(var ASQLQuery: TSQLQuery): THL7Message;
 var
-  StringList, StringListOBX: TStrings;
+  StringList: TStrings;
   I: Integer;
 begin
   Result := THL7Message.Create;
   StringList := TStringList.Create;
   try
     //MSH
-    StringList.Add(LoadMSHById(ASQLQuery, AId));
-    //PID
-    StringList.Add(LoadPIDById(ASQLQuery, AId));
-    //OBR
-    StringList.Add(LoadOBRById(ASQLQuery, AId));
-    //OBX
+    StringList.Add(LoadMSHById(ASQLQuery));
+
     Result.InitMSG(StringList);
-    StringListOBX := Result.LoadOBXById(ASQLQuery, AId);
-    try
-      for I := 0 to StringListOBX.Count - 1 do
-        StringList.Add(StringListOBX[I]);
-      Result.InitMSG(StringList);
-    finally
-      StringListOBX.Free;
-    end;
+    //PID
+    Result.LoadPID(ASQLQuery, StringList);
+    //OBR
+    Result.LoadOBR(ASQLQuery, StringList);
+    //OBX
+    Result.LoadOBX(ASQLQuery, StringList);
+
+    Result.InitMSG(StringList);
   finally
     StringList.Free;
   end;
 end;
 
-class function THL7Message.LoadMSHById(ASQLQuery: TSQLQuery; AId: Integer): string;
+class function THL7Message.LoadMSHById(ASQLQuery: TSQLQuery): string;
 begin
   //SegnentName
   Result := 'MSH';
@@ -1148,23 +1177,131 @@ begin
   end;
 end;
 
-function THL7Message.LoadOBXById(var ASQLQuery: TSQLQuery; AId: Integer): TStrings;
+procedure THL7Message.LoadOBR(var ASQLQuery: TSQLQuery;
+  var AOBRStrings: TStrings);
+var
+  OBRStr: string;
+begin
+  ASQLQuery.SQL.Text :=
+    'select * from accession a ' +
+    'order by a.accession_id';
+  try
+    ASQLQuery.Open;
+    while not ASQLQuery.Eof do
+    with ASQLQuery do
+    begin
+      //SegnentName
+      OBRStr := 'OBR';
+      //PlacerOrderNumber
+      OBRStr := OBRStr + HL7_SEPARATOR + '1';
+      //FillerOrderNumber
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //UniversalServiceID
+      OBRStr := OBRStr + HL7_SEPARATOR + FieldByName('accession_number').AsString;
+      //Priority
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //RequestedDateTime
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //ObservationDateTime
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //ObservationEndDateTime
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //CollectionVolume
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //CollectorIdentifier
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //SpecimenActionCode
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //DangerCode
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //RelevantClinicalInfo
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //SpecimenReceivedDateTime
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //SpecimenSource
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //OrderingProvider
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //OrderCallbackPhoneNumber
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //PlacerField1
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //PlacerField2
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //FillerField1
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //FillerField2
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //ResultsRptStatusChngDateTime
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //ChargeToPractice
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //DiagnosticServSectID
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //ResultStatus
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //ParentResult
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //QuantityOrTiming
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //ResultCopiesTo
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //Parent
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //TransportationMode
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //ReasonForStudy
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //PrincipalResultInterpreter
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //AssistantResultInterpreter
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //Technician
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //Transcriptionist
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //ScheduledDateTime
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //NumberOfSampleContainers
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //TransportLogisticsOfCollectedSample
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //CollectorsComment
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //TransportArrangementResponsibility
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //TransportArranged
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //EscortRequired
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+      //PlannedPatientTransportComment
+      OBRStr := OBRStr + HL7_SEPARATOR + '';
+
+      AOBRStrings.Add(OBRStr);
+      Next;
+    end;
+  except
+
+  end;
+end;
+
+procedure THL7Message.LoadOBX(var ASQLQuery: TSQLQuery;
+  var AOBXStrings: TStrings);
 var
   I: Integer;
   Speciman: TSpeciman;
 begin
   if Assigned(SpecimanList) then
-    SpecimanList.Load(ASQLQuery, AId);
+    SpecimanList.Load(ASQLQuery);
 
-  Result := TStringList.Create;
   //SpecimenLabel
   for I := 0 to SpecimanList.Count - 1 do
   begin
     Speciman := TSpeciman(SpecimanList[I]);
     if Assigned(Speciman) then
       if Speciman.SpecimenLabel <> EmptyStr then
-        Result.Add(HL7_SGM_OBX + HL7_SEPARATOR +
-                   IntToStr(Result.Count + 1) + HL7_SEPARATOR +
+        AOBXStrings.Add(HL7_SGM_OBX + HL7_SEPARATOR +
+                   IntToStr(AOBXStrings.Count + 1) + HL7_SEPARATOR +
                    'TX' + HL7_SEPARATOR +
 
                    '00000-0' + HL7_SEPARATOR_COMPONENT + OBX_TEXT_ST_SPEC_LABEL +
@@ -1186,8 +1323,8 @@ begin
     Speciman := TSpeciman(SpecimanList[I]);
     if Assigned(Speciman) then
       if Speciman.GrossDescription <> EmptyStr then
-        Result.Add(HL7_SGM_OBX + HL7_SEPARATOR +
-                   IntToStr(Result.Count + 1) + HL7_SEPARATOR +
+        AOBXStrings.Add(HL7_SGM_OBX + HL7_SEPARATOR +
+                   IntToStr(AOBXStrings.Count + 1) + HL7_SEPARATOR +
                    'TX' + HL7_SEPARATOR +
 
                    '00000-0' + HL7_SEPARATOR_COMPONENT + OBX_TEXT_ST_GROSS_DESC +
@@ -1209,8 +1346,8 @@ begin
     Speciman := TSpeciman(SpecimanList[I]);
     if Assigned(Speciman) then
       if Speciman.MicroscopicObserv <> EmptyStr then
-        Result.Add(HL7_SGM_OBX + HL7_SEPARATOR +
-                   IntToStr(Result.Count + 1) + HL7_SEPARATOR +
+        AOBXStrings.Add(HL7_SGM_OBX + HL7_SEPARATOR +
+                   IntToStr(AOBXStrings.Count + 1) + HL7_SEPARATOR +
                    'TX' + HL7_SEPARATOR +
 
                    '00000-0' + HL7_SEPARATOR_COMPONENT + OBX_TEXT_ST_MICROSCOPIC_OBSERV +
@@ -1232,8 +1369,8 @@ begin
     Speciman := TSpeciman(SpecimanList[I]);
     if Assigned(Speciman) then
       if Speciman.Diagnosis <> EmptyStr then
-        Result.Add(HL7_SGM_OBX + HL7_SEPARATOR +
-                   IntToStr(Result.Count + 1) + HL7_SEPARATOR +
+        AOBXStrings.Add(HL7_SGM_OBX + HL7_SEPARATOR +
+                   IntToStr(AOBXStrings.Count + 1) + HL7_SEPARATOR +
                    'TX' + HL7_SEPARATOR +
 
                    '00000-0' + HL7_SEPARATOR_COMPONENT + OBX_TEXT_ST_FINAL_DIAGNOSTIC +
@@ -1247,6 +1384,98 @@ begin
                    '' + HL7_SEPARATOR +
                    'F'
                    );
+  end;
+end;
+
+function THL7Message.LoadPID(var ASQLQuery: TSQLQuery;
+  var APIDStrings: TStrings): TStrings;
+var
+  PIDStr: string;
+begin
+  ASQLQuery.SQL.Text :=
+    'select * from patient p ' +
+    'order by p.patient_id';
+  try
+    ASQLQuery.Open;
+    while not ASQLQuery.Eof do
+    with ASQLQuery do
+    begin
+      //Segment Name
+      PIDStr := 'PID';
+      //PatientID
+      PIDStr := PIDStr + HL7_SEPARATOR + IntToStr(FieldByName('patient_id').AsInteger);
+      //PatientIDExt
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //PatientIDInt
+      PIDStr := PIDStr + HL7_SEPARATOR + FieldByName('medical_record').AsString;
+      //PatientIDAlt
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //PatientName
+      PIDStr := PIDStr + HL7_SEPARATOR + FieldByName('last_name').AsString;
+      PIDStr := PIDStr + HL7_SEPARATOR_COMPONENT + FieldByName('first_name').AsString;
+      //MothMaidenName
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //DateBirth
+      PIDStr := PIDStr + HL7_SEPARATOR + DateToMedDateStr(SQLiteDateStrToDate(FieldByName('date_of_birth').AsString));
+      //Gender
+      PIDStr := PIDStr + HL7_SEPARATOR + FieldByName('gender').AsString;
+      //PatientAlias
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //Race
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //Address
+      PIDStr := PIDStr + HL7_SEPARATOR + FieldByName('address').AsString;
+      PIDStr := PIDStr + HL7_SEPARATOR_COMPONENT + '';
+      PIDStr := PIDStr + HL7_SEPARATOR_COMPONENT + FieldByName('city').AsString;
+      PIDStr := PIDStr + HL7_SEPARATOR_COMPONENT + FieldByName('state_province').AsString;
+      PIDStr := PIDStr + HL7_SEPARATOR_COMPONENT + FieldByName('zip_postal_code').AsString;
+      PIDStr := PIDStr + HL7_SEPARATOR_COMPONENT + '';
+      //CountyCode
+      PIDStr := PIDStr + HL7_SEPARATOR + FieldByName('country_region').AsString;
+      //PhoneNumbHome
+      PIDStr := PIDStr + HL7_SEPARATOR + FieldByName('home_phone').AsString;
+      //PhoneNumbBusiness
+      PIDStr := PIDStr + HL7_SEPARATOR + FieldByName('business_phone').AsString;
+      //PrimaryLanguage
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //MaritalStatus
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //Religion
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //PatientAccountNumber
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //SSNNumb
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //DriverLicNumb
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //MothersIdentifie
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //EthnicGroup
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //BirthPlace
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //MultipleBirthIndicator
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //BirthOrder
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //Citizenship
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //VeteransMilitaryStatus
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //Nationality
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //PatientDeathDateTime
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //PatientDeathIndicator
+      PIDStr := PIDStr + HL7_SEPARATOR + '';
+      //End segment
+      PIDStr := PIDStr + HL7_SEPARATOR;
+
+      APIDStrings.Add(PIDStr);
+      Next;
+    end;
+  except
+
   end;
 end;
 
@@ -1447,10 +1676,15 @@ var
 begin
   StringList := TStringList.Create;
   try
+    //MSH
     StringList.Add(MSH.ToString);
-    StringList.Add(PID.ToString);
-    StringList.Add(OBR.ToString);
-//    StringList.Add(OBX.ToString);
+    //PID
+    for I := 0 to PIDList.Count - 1 do
+      StringList.Add(TPID(PIDList[I]).ToString);
+    //OBR
+    for I := 0 to OBRList.Count - 1 do
+      StringList.Add(TOBR(OBRList[I]).ToString);
+    //OBX
     for I := 0 to OBXList.Count - 1 do
       StringList.Add(TOBX(OBXList[I]).ToString);
     Result := StringList.Text;
@@ -2148,12 +2382,15 @@ begin
   end;
 end;
 
-procedure TSpecimanList.Load(var ASQLQuery: TSQLQuery; AId: Integer);
+procedure TSpecimanList.Load(var ASQLQuery: TSQLQuery);
 begin
   ASQLQuery.SQL.Text :=
-    'select a.accession_id, a.accession_number, t.* from accession a ' +
-    'left join specimen t on a.accession_number = t.accession_number ' +
-    'where a.accession_id = ' + IntToStr(AId);
+    'select * from specimen s ' +
+    'order by s.specimen_id ';
+//  ASQLQuery.SQL.Text :=
+//    'select a.accession_id, a.accession_number, t.* from accession a ' +
+//    'left join specimen t on a.accession_number = t.accession_number ' +
+//    'where a.accession_id = ' + IntToStr(AId);
   try
     ASQLQuery.Open;
     while not ASQLQuery.Eof do

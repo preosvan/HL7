@@ -33,8 +33,6 @@ object MainForm: TMainForm
     ScrollBars = ssBoth
     TabOrder = 0
     WordWrap = False
-    ExplicitTop = 244
-    ExplicitHeight = 286
   end
   object pnBottom: TPanel
     Left = 0
@@ -102,15 +100,15 @@ object MainForm: TMainForm
       TabOrder = 5
       OnClick = btnSendClick
     end
-    object SpinEditID: TSpinEdit
-      Left = 456
-      Top = 8
-      Width = 58
-      Height = 22
-      MaxValue = 0
-      MinValue = 0
+    object chbIsFromDB: TCheckBox
+      Left = 457
+      Top = 10
+      Width = 57
+      Height = 17
+      Caption = 'From DB'
+      Checked = True
+      State = cbChecked
       TabOrder = 6
-      Value = 43
     end
   end
   object meMsg: TMemo
@@ -184,22 +182,23 @@ object MainForm: TMainForm
         'y tissue from levels I, II, and III will be labeled accordingly.' +
         '||||||F'
       
-        'OBX|9|TX|22635-7^Path report.microscopic observation^LN||Section' +
-        's of part #1 confirm frozen section diagnosis of infiltrating du' +
-        'ct carcinoma. It is to be noted that the tumor cells show consid' +
-        'erable pleomorphism, and mitotic figures are frequent (as many a' +
-        's 4 per high power field). Many foci of calcification are presen' +
-        't within the tumor. Part #2 consists of fibrofatty tissue and si' +
-        'ngle tiny lymph node free of disease. Part #3 includes 18 lymph ' +
-        'nodes, three from Level III, two from Level II and thirteen from' +
-        ' Level I. All lymph nodes are free of disease with the exception' +
-        ' of one Level I lymph node, which contains several masses of met' +
-        'astatic carcinoma. All sections taken radially from the superfic' +
-        'ial center of the resection site fail to include tumor, indicati' +
-        'ng the tumor to have originated deep within the breast parenchym' +
-        'a. Similarly, there is no malignancy in the nipple region, or in' +
-        ' the lactiferous sinuses. Sections of deep surgical margin demon' +
-        'strate diffuse tumor infiltration of deep fatty tissues, however'
+        'OBX|9|TX|22635-7^Path report.microscopic observation^LN|1|Sectio' +
+        'ns of part #1 confirm frozen section diagnosis of infiltrating d' +
+        'uct carcinoma. It is to be noted that the tumor cells show consi' +
+        'derable pleomorphism, and mitotic figures are frequent (as many ' +
+        'as 4 per high power field). Many foci of calcification are prese' +
+        'nt within the tumor. Part #2 consists of fibrofatty tissue and s' +
+        'ingle tiny lymph node free of disease. Part #3 includes 18 lymph' +
+        ' nodes, three from Level III, two from Level II and thirteen fro' +
+        'm Level I. All lymph nodes are free of disease with the exceptio' +
+        'n of one Level I lymph node, which contains several masses of me' +
+        'tastatic carcinoma. All sections taken radially from the superfi' +
+        'cial center of the resection site fail to include tumor, indicat' +
+        'ing the tumor to have originated deep within the breast parenchy' +
+        'ma. Similarly, there is no malignancy in the nipple region, or i' +
+        'n the lactiferous sinuses. Sections of deep surgical margin demo' +
+        'nstrate diffuse tumor infiltration of deep fatty tissues, howeve'
+      'r'
       
         ', there is no invasion of muscle. Total size of primary tumor is' +
         ' estimated to be 4cm in greatest dimension.||||||F'
@@ -217,6 +216,5 @@ object MainForm: TMainForm
     ScrollBars = ssBoth
     TabOrder = 2
     WordWrap = False
-    ExplicitTop = 8
   end
 end

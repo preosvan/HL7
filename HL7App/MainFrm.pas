@@ -18,8 +18,8 @@ type
     btnOBX: TButton;
     btnSave: TButton;
     btnSend: TButton;
-    SpinEditID: TSpinEdit;
     Splitter: TSplitter;
+    chbIsFromDB: TCheckBox;
     procedure btnMSHClick(Sender: TObject);
     procedure btnPatientClick(Sender: TObject);
     procedure btnOBRClick(Sender: TObject);
@@ -233,17 +233,17 @@ var
   S: string;
   Msg: THL7Message;
   MsgText: string;
-  Id: Integer;
 begin
-  Id := StrToIntDef(SpinEditID.Text, 0);
-  if Id < 1 then
+  //From databese meMsg.Lines
+  if not chbIsFromDB.Checked then
   begin
     if CheckHL7(meMsg.Lines, hlsNone) then
       MsgText := meMsg.Text
   end
   else
+  //From databese
   begin
-    Msg := THL7Message.LoadById(DM.SQLQuery, Id);
+    Msg := THL7Message.Load(DM.SQLQuery);
     try
       MsgText := Msg.ToString;
     finally
@@ -251,6 +251,7 @@ begin
     end;
   end;
 
+  //Send HL7 message
   DM.SentMsg := '';
   case DM.HL7Client.SynchronousSend(MsgText, S) of
     srError:
